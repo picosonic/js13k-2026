@@ -30,9 +30,23 @@ Unicorns and Rainbows
 
 Game ideas
 ----------
+Usually the JS13k themes are related to death and destruction, so I really didn't know where to start with something like unicorns and rainbows, haha. Anyways to try to cure my "blank page syndrome", I asked AI for some ideas. Here's a few of the better ones.
+* Unicorn Bakery - Where you run a bakery and have to run around making cupcake orders matching ingredients by colour
+* Rainbow rescue - Unicorns are trapped in various places, you need to jump between colours to rescue them
+* Cloud Unicorn Delivery - You're a delivery driver taking magical packages between floating islands. Make rainbow bridges with your finite rainbow power 
+* Rainbow Hooves - A rhythm game where you tap when a moving unicorn steps on specific coloured rainbow tiles. Longer streaks of matches give the dancing unicorn a longer rainbow trail
+* Rainbow Rush - Racing across clouds collecting rainbow colours. Each colour gives you a different ability. You need to complete the rainbow before the storm comes
 
 Here is a rough diary of progress as posted on [Twitter](https://twitter.com/femtosonic), taken from notes and [commit logs](https://github.com/picosonic/js13k-2026/commits/)..
 
 19th August
 -----------
 The theme was annouced whilst I was on holiday in Spain chasing the [total solar eclipse](https://en.wikipedia.org/wiki/Solar_eclipse_of_August_12,_2026), so I didn't really get much of a chance to start dev until I was back home.
+
+20th August
+-----------
+As my entry last year lost quite a lot of points by not having any audio, and in any case I ran out of time/space to put any in - I decided to add music first. So with this in mind I started looking at compact ways to make reasonable sounding music, with melody, bass and percussion.
+
+21st August
+-----------
+After playing around with various looping melodies, I decided on making slight adjustments to the various aspects of the track so that although it's quite repetitive, it doesn't sound too repetitive due to adjustments.
