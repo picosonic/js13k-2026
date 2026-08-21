@@ -74,6 +74,7 @@ function init()
   {
     e = e || window.event;
     updatekeystate(e, 1);
+chipt.start();
   };
 
   document.onkeyup=function(e)
