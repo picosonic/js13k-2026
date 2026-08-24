@@ -11,12 +11,18 @@ const KEYRIGHT=4;
 const KEYDOWN=8;
 const KEYACTION=16;
 
+const PNGPREFIX="data:image/png;base64,";
+
 // Game state
 var gs={
   // Canvas
   canvas:null,
   ctx:null,
-  scale:1,
+  scale:1, // Changes when resizing window
+
+  // Tilemap image
+  tilemap:null,
+  tilemapflip:null,
 
   // Main character
   x:0, // x position
@@ -66,6 +72,11 @@ function playfieldsize()
   gs.canvas.style.transform='scale('+gs.scale+')';
 }
 
+// Called once init is complete
+function start()
+{
+}
+
 // Entry point
 function init()
 {
@@ -97,6 +108,29 @@ chipt.start();
   window.addEventListener("resize", function() { playfieldsize(); });
 
   playfieldsize();
+
+  // Once image has loaded, create flipped one
+  gs.tilemap=new Image;
+  gs.tilemap.onload=function()
+  {
+    // Create a flipped version of the spritesheet
+    // https://stackoverflow.com/questions/21610321/javascript-horizontally-flip-an-image-object-and-save-it-into-a-new-image-objec
+    var c=document.createElement('canvas');
+    var ctx=c.getContext('2d');
+    c.width=gs.tilemap.width;
+    c.height=gs.tilemap.height;
+    ctx.scale(-1, 1);
+    ctx.drawImage(gs.tilemap, -gs.tilemap.width, 0);
+
+    gs.tilemapflip=new Image;
+    gs.tilemapflip.onload=function()
+    {
+      // Start
+      start();
+    };
+    gs.tilemapflip.src=c.toDataURL();
+  };
+  gs.tilemap.src=PNGPREFIX+tilemap;
 }
 
 // Run the init() once page has loaded

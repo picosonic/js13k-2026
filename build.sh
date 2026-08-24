@@ -19,6 +19,34 @@ zipfile="js13k.zip"
 buildpath="tmpbuild"
 jscat="${buildpath}/min.js"
 indexcat="${buildpath}/index.html"
+assetsrc="assets/tilemap.png"
+assetjs="tilemap.js"
+
+# See if the tilemaps asset needs to be rebuilt
+srcdate=`stat -c %Y ${assetsrc} 2>/dev/null`
+destdate=`stat -c %Y ${assetjs} 2>/dev/null`
+
+# If no js asset found, force build
+if [ "${destdate}" == "" ]
+then
+  destdate=0
+fi
+
+# When source is newer, rebuild
+if [ ${srcdate} -gt ${destdate} ]
+then
+  echo -n "Rebuilding tilemaps JS..."
+
+  # Clear old dest
+  echo -n "" > "${assetjs}"
+
+  # Convert from src to dest
+  echo -n 'const tilemap="' >> "${assetjs}"
+  base64 -w 0 "${assetsrc}" >> "${assetjs}"
+  echo '";' >> "${assetjs}"
+
+  echo "done"
+fi
 
 if [ "${param}" == "run" ]
 then
@@ -40,7 +68,7 @@ mkdir "${buildpath}"
 # Concatenate the JS files
 echo "Concatenating JS"
 touch "${jscat}" >/dev/null 2>&1
-for file in "inputs.js" "chipper.js" "main.js"
+for file in "${assetjs}" "inputs.js" "chipper.js" "main.js"
 do
   cat "${file}" >> "${jscat}"
 done

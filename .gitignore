@@ -1,6 +1,9 @@
 # Build folder
 tmpbuild
 
+# Built files
+tilemap.js
+
 # Other folders
 closure-compiler
 
