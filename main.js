@@ -1,8 +1,12 @@
 // JS 13k 2026 entry
 
 // Global constants
-const xmax=640;
-const ymax=360;
+const XMAX=640;
+const YMAX=360;
+const TILEWIDTH=16;
+const TILEHEIGHT=16;
+const TILESPERROW=8;
+const MOVESPEED=4;
 
 const KEYNONE=0;
 const KEYLEFT=1;
@@ -22,6 +26,9 @@ var gs={
   ctx:null,
   scale:1, // Changes when resizing window
 
+  // physics in pixels per frame @ 60fps
+  friction:1,
+
   // Tilemap image
   tilemap:null,
   tilemapflip:null,
@@ -34,6 +41,8 @@ var gs={
   jump:false, // jumping
   fall:false, // falling
   dir:0, //direction (-1=left, 0=none, 1=right)
+  flip:false, // should the sprite be flipped?
+  speed:MOVESPEED,
 
   // Input
   keystate:KEYNONE,
@@ -50,8 +59,7 @@ var gs={
 function playfieldsize()
 {
   var height=window.innerHeight;
-  var aspectratio=xmax/ymax;
-  var ratio=xmax/ymax;
+  var ratio=XMAX/YMAX;
   var width=Math.floor(height*ratio);
   var top=0;
   var left=Math.floor((window.innerWidth/2)-(width/2));
@@ -59,14 +67,14 @@ function playfieldsize()
   if (width>window.innerWidth)
   {
     width=window.innerWidth;
-    ratio=ymax/xmax;
+    ratio=YMAX/XMAX;
     height=Math.floor(width*ratio);
 
     left=0;
     top=Math.floor((window.innerHeight/2)-(height/2));
   }
 
-  gs.scale=(height/ymax);
+  gs.scale=(height/YMAX);
 
   gs.canvas.style.top=top+"px";
   gs.canvas.style.left=left+"px";
@@ -74,9 +82,108 @@ function playfieldsize()
   gs.canvas.style.transform='scale('+gs.scale+')';
 }
 
+function standcheck()
+{
+  // When no horizontal movement pressed, slow down by friction
+  if (((!ispressed(KEYLEFT)) && (!ispressed(KEYRIGHT))) ||
+      ((ispressed(KEYLEFT)) && (ispressed(KEYRIGHT))))
+  {
+    // Going left
+    if (gs.dir==-1)
+    {
+      if (gs.hs<0)
+      {
+        gs.hs+=gs.friction;
+      }
+      else
+      {
+        gs.hs=0;
+        gs.dir=0;
+      }
+    }
+
+    // Going right
+    if (gs.dir==1)
+    {
+      if (gs.hs>0)
+      {
+        gs.hs-=gs.friction;
+      }
+      else
+      {
+        gs.hs=0;
+        gs.dir=0;
+      }
+    }
+  }
+}
+
+// Update player movements
+function updatemovements()
+{
+  // Go left if moving left
+  if (gs.dir==-1)
+    gs.x-=MOVESPEED;
+
+  // Check for LHS collision
+  if (gs.x<(0-TILEWIDTH))
+  {
+    gs.x=0-TILEWIDTH;
+    gs.dir=0;
+  }
+
+  // Go right if moving right
+  if (gs.dir==1)
+    gs.x+=MOVESPEED;
+
+  // Check for RHS collision
+  if (gs.x>(XMAX-TILEWIDTH))
+  {
+    gs.x=XMAX-TILEWIDTH;
+    gs.dir=0;
+  }
+
+  // If no input detected, slow the player using friction
+  standcheck();
+
+  // When a movement key is pressed, adjust players speed and direction
+  if (gs.keystate!=KEYNONE)
+  {
+    // Left key
+    if ((ispressed(KEYLEFT)) && (!ispressed(KEYRIGHT)))
+    {
+      gs.hs=-gs.speed;
+      gs.dir=-1;
+      gs.flip=false;
+    }
+
+    // Right key
+    if ((ispressed(KEYRIGHT)) && (!ispressed(KEYLEFT)))
+    {
+      gs.hs=gs.speed;
+      gs.dir=1;
+      gs.flip=true;
+    }
+  }
+}
+
 // Update game state
 function update()
 {
+  updatemovements();
+}
+
+// Tile drawing
+function drawtile(tileid, x, y)
+{
+  gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x, y, TILEWIDTH, TILEHEIGHT);
+}
+
+// Draw sprite in current state
+function drawsprite(x, y)
+{
+  gs.ctx.fillStyle='red';
+  gs.ctx.fillRect(x, y, 32, 32);
 }
 
 // Redraw game frame
@@ -84,6 +191,8 @@ function redraw()
 {
   gs.ctx.fillStyle=BGCOLOUR;
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
+
+  drawsprite(gs.x, gs.y);
 }
 
 // Request animation frame callback
