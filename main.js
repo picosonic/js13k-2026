@@ -1,12 +1,16 @@
 // JS 13k 2026 entry
+// Not yet named
 
 // Global constants
 const XMAX=640;
 const YMAX=360;
+const TARGETFPS=60;
+
 const TILEWIDTH=16;
 const TILEHEIGHT=16;
 const TILESPERROW=8;
 const MOVESPEED=4;
+const JUMPSPEED=3;
 
 const KEYNONE=0;
 const KEYLEFT=1;
@@ -22,19 +26,22 @@ const PNGPREFIX="data:image/png;base64,";
 // Game state
 var gs={
   // animation frame of reference
-  step:(1/60), // target step time @ 60 fps
+  step:(1/TARGETFPS), // target step time @ 60 fps
   acc:0, // accumulated time since last frame
   lasttime:0, // time of last frame
+
   fps:0, // current FPS
   frametimes:[], // array of frame times
+
+  // physics in pixels per frame @ 60fps
+  gravity:0.25,
+  terminalvelocity:10,
+  friction:1,
 
   // Canvas
   canvas:null,
   ctx:null,
   scale:1, // Changes when resizing window
-
-  // physics in pixels per frame @ 60fps
-  friction:1,
 
   // Tilemap image
   tilemap:null,
@@ -43,13 +50,18 @@ var gs={
   // Main character
   x:0, // x position
   y:0, // y position
+  sx:0, // start x position (for current level)
+  sy:0, // start y position (for current level)
   vs:0, // vertical speed
   hs:0, // horizontal speed
   jump:false, // jumping
   fall:false, // falling
-  dir:0, //direction (-1=left, 0=none, 1=right)
-  flip:false, // should the sprite be flipped?
-  speed:MOVESPEED,
+  dir:0, // direction (-1=left, 0=none, 1=right)
+  speed:MOVESPEED, // walking speed
+  jumpspeed:JUMPSPEED, // jumping speed
+  flip:false, // if player is horizontally flipped
+
+  // Level attributes
 
   // Input
   keystate:KEYNONE,
@@ -59,12 +71,18 @@ var gs={
   gamepadaxes:[], // Axes mapping
   gamepadaxesval:[], // Axes values
 
-  // Animation
+  // Timeline for animation
   timeline:new timelineobj(), // timeline for general animation
 
   // Debug flag
   debug:false
 };
+
+// Random number generator
+function rng()
+{
+  return Math.random();
+}
 
 // Handle resize events
 function playfieldsize()
@@ -91,6 +109,19 @@ function playfieldsize()
   gs.canvas.style.left=left+"px";
   gs.canvas.style.transformOrigin='0 0';
   gs.canvas.style.transform='scale('+gs.scale+')';
+}
+
+// Draw tile
+function drawtile(tileid, x, y)
+{
+  gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x, y, TILEWIDTH, TILEHEIGHT);
+}
+
+// Draw sprite in current state
+function drawsprite(x, y)
+{
+  gs.ctx.fillStyle='red';
+  gs.ctx.fillRect(x, y, 32, 32);
 }
 
 function standcheck()
@@ -184,19 +215,6 @@ function update()
   updatemovements();
 }
 
-// Tile drawing
-function drawtile(tileid, x, y)
-{
-  gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x, y, TILEWIDTH, TILEHEIGHT);
-}
-
-// Draw sprite in current state
-function drawsprite(x, y)
-{
-  gs.ctx.fillStyle='red';
-  gs.ctx.fillRect(x, y, 32, 32);
-}
-
 // Redraw game frame
 function redraw()
 {
@@ -281,6 +299,7 @@ chipt.start();
   // Set up canvas
   gs.canvas=document.getElementById("canvas");
   gs.ctx=gs.canvas.getContext("2d");
+  gs.ctx.imageSmoothingEnabled=false; // don't blur when scaling
 
   window.addEventListener("resize", function() { playfieldsize(); });
 
