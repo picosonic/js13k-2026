@@ -9,8 +9,8 @@ const TARGETFPS=60;
 const TILEWIDTH=16;
 const TILEHEIGHT=16;
 const TILESPERROW=8;
-const MOVESPEED=4;
-const JUMPSPEED=3;
+const MOVESPEED=8;
+const JUMPSPEED=12;
 
 const KEYNONE=0;
 const KEYLEFT=1;
@@ -18,6 +18,8 @@ const KEYUP=2;
 const KEYRIGHT=4;
 const KEYDOWN=8;
 const KEYACTION=16;
+
+const TILENONE=0;
 
 const BGCOLOUR="rgb(128,168,209)";
 
@@ -34,7 +36,7 @@ var gs={
   frametimes:[], // array of frame times
 
   // physics in pixels per frame @ 60fps
-  gravity:0.25,
+  gravity:0.8,
   terminalvelocity:10,
   friction:1,
 
@@ -62,6 +64,9 @@ var gs={
   flip:false, // if player is horizontally flipped
 
   // Level attributes
+  level:0, // Level number (0 based)
+  width:0, // Width of level in tiles
+  height:0, // Height of level in tiles
 
   // Input
   keystate:KEYNONE,
@@ -124,6 +129,121 @@ function drawsprite(x, y)
   gs.ctx.fillRect(x, y, 32, 32);
 }
 
+// Check if player has left the map
+function offmapcheck()
+{
+//TODO remove
+return;
+
+  if ((gs.x<(0-TILEWIDTH)) || ((gs.x+1)>gs.width*TILEWIDTH) || (gs.y>gs.height*TILEHEIGHT))
+  {
+    gs.x=gs.sx;
+    gs.y=gs.sy;
+    gs.speed=MOVESPEED;
+  }
+}
+
+function collide(px, py, pw, ph)
+{
+  // Check for horizontal screen edge collision
+  if (px<=(0-(TILEWIDTH/5))) return true;
+  if ((px+(TILEWIDTH/3))>=(gs.width*TILEWIDTH)) return true;
+
+  // Check for vertical screen edge collision
+  if (py>(gs.height*TILEHEIGHT)) return true;
+
+  return TILENONE;
+}
+
+// Collision check with player hitbox, return tile
+function playerlook(x, y)
+{
+  return collide(x+(TILEWIDTH/3), y+((TILEHEIGHT/5)*2), TILEWIDTH/3, (TILEHEIGHT/5)*3);
+}
+
+// Collision check with player hitbox, true/flase
+function playercollide(x, y)
+{
+  return (parseInt(playerlook(x, y), 10)!=TILENONE);
+}
+
+// Check if player on the ground or falling
+function groundcheck()
+{
+  // Check if we are on the ground
+  if (playercollide(gs.x, gs.y+1))
+  {
+    gs.vs=0;
+    gs.jump=false;
+    gs.fall=false;
+
+    // Check for jump pressed
+    if ((ispressed(KEYUP)) || (ispressed(KEYACTION)))
+    {
+      gs.jump=true;
+
+      gs.vs=-gs.jumpspeed;
+    }
+  }
+  else
+  {
+    // We're in the air, increase falling speed until we're at terminal velocity
+    if (gs.vs<gs.terminalvelocity)
+      gs.vs+=gs.gravity;
+
+    // Set falling flag when vertical speed is positive
+    if (gs.vs>0)
+      gs.fall=true;
+  }
+}
+
+// Process jumping
+function jumpcheck()
+{
+  // When jumping ..
+  if (gs.jump)
+  {
+    // Check if losing altitude
+    if (gs.vs>=0)
+    {
+      gs.jump=false;
+      gs.fall=true;
+    }
+  }
+}
+
+// Move player by appropriate amount, up to a collision
+function collisioncheck()
+{
+  var loop;
+
+  // Check for vertical collisions
+  if ((gs.vs!=0) && (playercollide(gs.x, gs.y+gs.vs)))
+  {
+    loop=TILEHEIGHT;
+    // A collision occured, so move the character until it hits
+    while ((!playercollide(gs.x, gs.y+(gs.vs>0?1:-1))) && (loop>0))
+    {
+      gs.y+=(gs.vs>0?1:-1);
+      loop--;
+    }
+
+    // Stop vertical movement
+    gs.vs=0;
+
+    // If mid jump, start descent
+    if (gs.jump)
+    {
+      gs.jump=false;
+      gs.fall=true;
+
+      gs.vs+=gs.gravity;
+    }
+  }
+
+  gs.y=Math.floor(gs.y+gs.vs);
+}
+
 function standcheck()
 {
   // When no horizontal movement pressed, slow down by friction
@@ -184,6 +304,18 @@ function updatemovements()
     gs.x=XMAX-TILEWIDTH;
     gs.dir=0;
   }
+
+  // Check if player has left the map
+  offmapcheck();
+
+  // Check if player on the ground or falling
+  groundcheck();
+
+  // Process jumping
+  jumpcheck();
+
+  // Move player by appropriate amount, up to a collision
+  collisioncheck();
 
   // If no input detected, slow the player using friction
   standcheck();
@@ -269,6 +401,10 @@ function rafcallback(timestamp)
 function start()
 {
   gs.timeline.reset();
+
+  gs.width=38;
+  gs.height=21;
+
   window.requestAnimationFrame(rafcallback);
 }
 
