@@ -52,6 +52,9 @@ var gs={
   gamepadaxes:[], // Axes mapping
   gamepadaxesval:[], // Axes values
 
+  // Animation
+  timeline:new timelineobj(), // timeline for general animation
+
   debug:false
 };
 
@@ -208,6 +211,7 @@ function rafcallback(timestamp)
 // Called once init is complete
 function start()
 {
+  gs.timeline.reset();
   window.requestAnimationFrame(rafcallback);
 }
 
