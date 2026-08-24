@@ -11,6 +11,8 @@ const KEYRIGHT=4;
 const KEYDOWN=8;
 const KEYACTION=16;
 
+const BGCOLOUR="rgb(128,168,209)";
+
 const PNGPREFIX="data:image/png;base64,";
 
 // Game state
@@ -72,9 +74,32 @@ function playfieldsize()
   gs.canvas.style.transform='scale('+gs.scale+')';
 }
 
+// Update game state
+function update()
+{
+}
+
+// Redraw game frame
+function redraw()
+{
+  gs.ctx.fillStyle=BGCOLOUR;
+  gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
+}
+
+// Request animation frame callback
+function rafcallback(timestamp)
+{
+  update();
+  redraw();
+
+  // Request we are called on the next frame
+  window.requestAnimationFrame(rafcallback);
+}
+
 // Called once init is complete
 function start()
 {
+  window.requestAnimationFrame(rafcallback);
 }
 
 // Entry point
