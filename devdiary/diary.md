@@ -49,4 +49,8 @@ As my entry last year lost quite a lot of points by not having any audio, and in
 
 21st August
 -----------
-After playing around with various looping melodies, I decided on making slight adjustments to the various aspects of the track so that although it's quite repetitive, it doesn't sound too repetitive due to adjustments.
+After playing around with various looping melodies, I decided on making slight adjustments to the various aspects of the track so that although it's quite repetitive, it doesn't sound too repetitive due to adjustments. Made a start on main character sprite.
+
+24th August
+-----------
+Added [animation frame callback](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) mechanism which will form the core of [game loop](https://en.wikipedia.org/wiki/Video_game_programming#Game_structure). Added beginnings of platformer physics, included a box which can be controlled to move around and jump.
