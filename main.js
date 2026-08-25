@@ -416,7 +416,7 @@ function init()
   {
     e = e || window.event;
     updatekeystate(e, 1);
-chipt.start();
+chipt.start(); // TODO
   };
 
   document.onkeyup=function(e)
@@ -429,6 +429,12 @@ chipt.start();
   window.ondragstart=function(e)
   {
     e = e || window.event;
+    e.preventDefault();
+  };
+
+  // Ignore mouse
+  window.onmousedown=function(e)
+  {
     e.preventDefault();
   };
 
