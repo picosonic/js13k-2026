@@ -2,15 +2,15 @@
 // Not yet named
 
 // Global constants
-const XMAX=640;
-const YMAX=360;
+const XMAX=320;
+const YMAX=180;
 const TARGETFPS=60;
 
 const TILEWIDTH=16;
 const TILEHEIGHT=16;
 const TILESPERROW=8;
-const MOVESPEED=8;
-const JUMPSPEED=12;
+const MOVESPEED=4;
+const JUMPSPEED=6;
 
 const KEYNONE=0;
 const KEYLEFT=1;
@@ -36,7 +36,7 @@ var gs={
   frametimes:[], // array of frame times
 
   // physics in pixels per frame @ 60fps
-  gravity:0.8,
+  gravity:0.4,
   terminalvelocity:10,
   friction:1,
 
@@ -48,6 +48,10 @@ var gs={
   // Tilemap image
   tilemap:null,
   tilemapflip:null,
+  tilesloaded:false,
+  spritesheet:null,
+  spritesheetflip:null,
+  spritesloaded:false,
 
   // Main character
   x:0, // x position
@@ -62,6 +66,7 @@ var gs={
   speed:MOVESPEED, // walking speed
   jumpspeed:JUMPSPEED, // jumping speed
   flip:false, // if player is horizontally flipped
+  frame:0, // animation frame
 
   // Level attributes
   level:0, // Level number (0 based)
@@ -122,11 +127,75 @@ function drawtile(tileid, x, y)
   gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x, y, TILEWIDTH, TILEHEIGHT);
 }
 
-// Draw sprite in current state
-function drawsprite(x, y)
+/*
+ctx.save();
+ctx.translate(positionX, positionY);
+ctx.rotate(angle);
+ctx.translate(-x,-y);
+ctx.drawImage(image,0,0);
+ctx.restore();
+
+where (positionX, positionY) is the coordinates on the canvas that I want the image to be located at and (x, y) is the point on the image where I want the image to rotate.
+
+note angle is in radians, so
+
+ctx.rotate((degrees * Math.PI) / 180);
+*/
+
+function drawleg(x, y, leg, angle)
 {
-  gs.ctx.fillStyle='red';
-  gs.ctx.fillRect(x, y, 32, 32);
+  gs.ctx.save();
+  gs.ctx.translate(x, y);
+  gs.ctx.rotate((angle*Math.PI)/180);
+  gs.ctx.translate(-x-leg.a.x, -y-leg.a.y);
+
+  gs.ctx.drawImage(gs.spritesheet, leg.x, leg.y, leg.w, leg.h, x, y, leg.w, leg.h);
+
+  gs.ctx.restore();
+}
+
+// Draw sprite in current state
+function drawsprite(x, y, pose)
+{
+  // x, y, width, height, hind_anchor(x, y), front_anchor(x, y)
+  const body={x:0,y:0,w:30,h:23,hind:{x:9,y:21},front:{x:20,y:21}};
+  // x, y, width, height, anchor(x, y)
+  const hindleg={x:0,y:23,w:8,h:14,a:{x:5,y:2}};
+  const frontleg={x:9,y:24,w:4,h:12,a:{x:2,y:1}};
+  const frontlegbent={x:14,y:24,w:8,h:8,a:{x:1,y:1}};
+
+  const poses=[
+    // Standing
+    {nf:frontleg, nfa:0, ff:frontleg, ffa:0, nha:0, fha:0},
+
+    // Running
+    {nf:frontleg, nfa:310, ff:frontleg, ffa:350, nha:30, fha:10},
+    {nf:frontleg, nfa:330, ff:frontlegbent, ffa:80, nha:20, fha:5},
+    {nf:frontlegbent, nfa:60, ff:frontlegbent, ffa:40, nha:330, fha:350},
+    {nf:frontlegbent, nfa:30, ff:frontlegbent, ffa:0, nha:340, fha:30},
+    {nf:frontlegbent, nfa:0, ff:frontleg, ffa:320, nha:0, fha:50},
+    {nf:frontleg, nfa:290, ff:frontleg, ffa:330, nha:60, fha:40}
+
+    // Jumping TODO
+  ];
+
+//  gs.ctx.fillStyle='red';
+//  gs.ctx.fillRect(x, y, 32, 32);
+
+  // Draw far-side legs (slightly in shadow)
+  gs.ctx.filter='brightness(70%)';
+  drawleg(x+body.hind.x+2, y+body.hind.y, hindleg, poses[pose].fha);
+  drawleg(x+body.front.x+2, y+body.front.y, poses[pose].ff, poses[pose].ffa);
+  gs.ctx.filter='none';
+
+  // Draw body
+  gs.ctx.drawImage(gs.spritesheet, body.x, body.y, body.w, body.h, x, y, body.w, body.h);
+
+  // Draw near-side legs
+  gs.ctx.filter='brightness(95%)';
+  drawleg(x+body.hind.x, y+body.hind.y, hindleg, poses[pose].nha);
+  drawleg(x+body.front.x, y+body.front.y, poses[pose].nf, poses[pose].nfa);
+  gs.ctx.filter='none';
 }
 
 // Check if player has left the map
@@ -345,6 +414,9 @@ function updatemovements()
 function update()
 {
   updatemovements();
+
+  gs.frame++;
+  if (gs.frame>=(5*6)) gs.frame=1; 
 }
 
 // Redraw game frame
@@ -353,7 +425,7 @@ function redraw()
   gs.ctx.fillStyle=BGCOLOUR;
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
 
-  drawsprite(gs.x, gs.y);
+  drawsprite(gs.x, gs.y, gs.hs==0?0:Math.floor(gs.frame/5)+1);
 }
 
 // Request animation frame callback
@@ -402,8 +474,8 @@ function start()
 {
   gs.timeline.reset();
 
-  gs.width=38;
-  gs.height=21;
+  gs.width=20;
+  gs.height=9;
 
   window.requestAnimationFrame(rafcallback);
 }
@@ -463,12 +535,39 @@ chipt.start(); // TODO
     gs.tilemapflip=new Image;
     gs.tilemapflip.onload=function()
     {
-      // Start
-      start();
+      gs.tilesloaded=true;
+
+      if (gs.spritesloaded)
+        start();
     };
     gs.tilemapflip.src=c.toDataURL();
   };
   gs.tilemap.src=PNGPREFIX+tilemap;
+
+  // Once image has loaded, create flipped one
+  gs.spritesheet=new Image;
+  gs.spritesheet.onload=function()
+  {
+    // Create a flipped version of the spritesheet
+    // https://stackoverflow.com/questions/21610321/javascript-horizontally-flip-an-image-object-and-save-it-into-a-new-image-objec
+    var c=document.createElement('canvas');
+    var ctx=c.getContext('2d');
+    c.width=gs.spritesheet.width;
+    c.height=gs.spritesheet.height;
+    ctx.scale(-1, 1);
+    ctx.drawImage(gs.spritesheet, -gs.spritesheet.width, 0);
+
+    gs.spritesheetflip=new Image;
+    gs.spritesheetflip.onload=function()
+    {
+      gs.spritesloaded=true;
+
+      if (gs.tilesloaded)
+        start();
+    };
+    gs.spritesheetflip.src=c.toDataURL();
+  };
+  gs.spritesheet.src=PNGPREFIX+spritesheet;
 }
 
 // Run the init() once page has loaded
