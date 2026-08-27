@@ -6,9 +6,12 @@ const XMAX=320;
 const YMAX=180;
 const TARGETFPS=60;
 
+const SPRITEWIDTH=35;
+const SPRITEHEIGHT=34;
 const TILEWIDTH=16;
 const TILEHEIGHT=16;
 const TILESPERROW=8;
+
 const MOVESPEED=4;
 const JUMPSPEED=6;
 
@@ -50,7 +53,8 @@ var gs={
   tilemapflip:null,
   tilesloaded:false,
   spritesheet:null,
-  spritesheetflip:null,
+  sprites:[],
+  spritesflip:[],
   spritesloaded:false,
 
   // Main character
@@ -62,7 +66,7 @@ var gs={
   hs:0, // horizontal speed
   jump:false, // jumping
   fall:false, // falling
-  dir:0, // direction (-1=left, 0=none, 1=right)
+  dir:0, // direction when moving (-1=left, 0=none, 1=right)
   speed:MOVESPEED, // walking speed
   jumpspeed:JUMPSPEED, // jumping speed
   flip:false, // if player is horizontally flipped
@@ -127,38 +131,64 @@ function drawtile(tileid, x, y)
   gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x, y, TILEWIDTH, TILEHEIGHT);
 }
 
-/*
-ctx.save();
-ctx.translate(positionX, positionY);
-ctx.rotate(angle);
-ctx.translate(-x,-y);
-ctx.drawImage(image,0,0);
-ctx.restore();
-
-where (positionX, positionY) is the coordinates on the canvas that I want the image to be located at and (x, y) is the point on the image where I want the image to rotate.
-
-note angle is in radians, so
-
-ctx.rotate((degrees * Math.PI) / 180);
-*/
-
-function drawleg(x, y, leg, angle)
+function drawleg(ctx, x, y, leg, angle)
 {
-  gs.ctx.save();
-  gs.ctx.translate(x, y);
-  gs.ctx.rotate((angle*Math.PI)/180);
-  gs.ctx.translate(-x-leg.a.x, -y-leg.a.y);
+  ctx.save();
 
-  gs.ctx.drawImage(gs.spritesheet, leg.x, leg.y, leg.w, leg.h, x, y, leg.w, leg.h);
+  ctx.translate(x, y);
+  ctx.rotate((angle*Math.PI)/180);
+  ctx.translate(-x-leg.a.x, -y-leg.a.y);
 
-  gs.ctx.restore();
+  ctx.drawImage(gs.spritesheet, leg.x, leg.y, leg.w, leg.h, x, y, leg.w, leg.h);
+
+  ctx.restore();
 }
 
 // Draw sprite in current state
 function drawsprite(x, y, pose)
 {
+  try
+  {
+    if (gs.flip)
+      gs.ctx.drawImage(gs.spritesflip[pose], x, y);
+    else
+      gs.ctx.drawImage(gs.sprites[pose], x, y);
+  }
+  catch(e){}
+}
+
+function getImageURL(imgData, width, height)
+{
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+
+  canvas.width = width;
+  canvas.height = height;
+
+  ctx.putImageData(imgData, 0, 0);
+
+  return canvas.toDataURL();
+}
+
+function getFlippedImageURL(img, width, height)
+{
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+
+  canvas.width = width;
+  canvas.height = height;
+
+  ctx.scale(-1, 1);
+  ctx.drawImage(img, -width, 0);
+
+  return canvas.toDataURL();
+}
+
+// Draw all the sprites to bitmaps
+function createsprites()
+{
   // x, y, width, height, hind_anchor(x, y), front_anchor(x, y)
-  const body={x:0,y:0,w:30,h:23,hind:{x:9,y:21},front:{x:20,y:21}};
+  const body={x:0,y:0,w:30,h:23,hind:{x:9,y:21},front:{x:20,y:22}};
   // x, y, width, height, anchor(x, y)
   const hindleg={x:0,y:23,w:8,h:14,a:{x:5,y:2}};
   const frontleg={x:9,y:24,w:4,h:12,a:{x:2,y:1}};
@@ -174,28 +204,60 @@ function drawsprite(x, y, pose)
     {nf:frontlegbent, nfa:60, ff:frontlegbent, ffa:40, nha:330, fha:350},
     {nf:frontlegbent, nfa:30, ff:frontlegbent, ffa:0, nha:340, fha:30},
     {nf:frontlegbent, nfa:0, ff:frontleg, ffa:320, nha:0, fha:50},
-    {nf:frontleg, nfa:290, ff:frontleg, ffa:330, nha:60, fha:40}
+    {nf:frontleg, nfa:290, ff:frontleg, ffa:330, nha:60, fha:40},
 
-    // Jumping TODO
+    // Jumping
+    {nf:frontleg, nfa:270, ff:frontleg, ffa:270, nha:60, fha:50},
+    
+    // Falling
+    {nf:frontlegbent, nfa:0, ff:frontlegbent, ffa:0, nha:0, fha:0}
   ];
 
-//  gs.ctx.fillStyle='red';
-//  gs.ctx.fillRect(x, y, 32, 32);
+  var c=document.createElement('canvas');
+  var ctx=c.getContext('2d');
 
-  // Draw far-side legs (slightly in shadow)
-  gs.ctx.filter='brightness(70%)';
-  drawleg(x+body.hind.x+2, y+body.hind.y, hindleg, poses[pose].fha);
-  drawleg(x+body.front.x+2, y+body.front.y, poses[pose].ff, poses[pose].ffa);
-  gs.ctx.filter='none';
+  c.width=SPRITEWIDTH*poses.length;
+  c.height=SPRITEHEIGHT;
 
-  // Draw body
-  gs.ctx.drawImage(gs.spritesheet, body.x, body.y, body.w, body.h, x, y, body.w, body.h);
+  for (var pose=0; pose<poses.length; pose++)
+  {
+    // Clear sprite frame
+    ctx.clearRect(0, 0, c.width, c.height);
 
-  // Draw near-side legs
-  gs.ctx.filter='brightness(95%)';
-  drawleg(x+body.hind.x, y+body.hind.y, hindleg, poses[pose].nha);
-  drawleg(x+body.front.x, y+body.front.y, poses[pose].nf, poses[pose].nfa);
-  gs.ctx.filter='none';
+    //// Draw sprite ////
+
+    // Draw far-side legs (slightly in shadow)
+    ctx.filter='brightness(70%)';
+    drawleg(ctx, (pose*SPRITEWIDTH)+body.hind.x+2, body.hind.y, hindleg, poses[pose].fha);
+    drawleg(ctx, (pose*SPRITEWIDTH)+body.front.x+2, body.front.y, poses[pose].ff, poses[pose].ffa);
+    ctx.filter='none';
+
+    // Draw body
+    ctx.drawImage(gs.spritesheet, body.x, body.y, body.w, body.h, (pose*SPRITEWIDTH), 0, body.w, body.h);
+
+    // Draw near-side legs
+    ctx.filter='brightness(95%)';
+    drawleg(ctx, (pose*SPRITEWIDTH)+body.hind.x, body.hind.y, hindleg, poses[pose].nha);
+    drawleg(ctx, (pose*SPRITEWIDTH)+body.front.x, body.front.y, poses[pose].nf, poses[pose].nfa);
+    ctx.filter='none';
+
+    // Capture sprite
+    var SpriteData=ctx.getImageData((pose*SPRITEWIDTH), 0, SPRITEWIDTH, SPRITEHEIGHT);
+    var sprite=new Image;
+    sprite.src=getImageURL(SpriteData, SPRITEWIDTH, SPRITEHEIGHT);
+
+    // Save sprite
+    gs.sprites.push(sprite);
+
+    // Capture flipped sprite
+    var spriteflip=new Image;
+    spriteflip.src=getFlippedImageURL(sprite, SPRITEWIDTH, SPRITEHEIGHT);
+
+    // Save sprite
+    gs.spritesflip.push(spriteflip);
+  }
+
+  start();
 }
 
 // Check if player has left the map
@@ -397,7 +459,7 @@ function updatemovements()
     {
       gs.hs=-gs.speed;
       gs.dir=-1;
-      gs.flip=false;
+      gs.flip=true;
     }
 
     // Right key
@@ -405,7 +467,7 @@ function updatemovements()
     {
       gs.hs=gs.speed;
       gs.dir=1;
-      gs.flip=true;
+      gs.flip=false;
     }
   }
 }
@@ -425,7 +487,13 @@ function redraw()
   gs.ctx.fillStyle=BGCOLOUR;
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
 
-  drawsprite(gs.x, gs.y, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+  if (gs.jump)
+    drawsprite(gs.x, gs.y, 7);
+  else
+    if (gs.fall)
+    drawsprite(gs.x, gs.y, 8);
+  else
+    drawsprite(gs.x, gs.y, gs.hs==0?0:Math.floor(gs.frame/5)+1);
 }
 
 // Request animation frame callback
@@ -519,11 +587,11 @@ chipt.start(); // TODO
 
   playfieldsize();
 
-  // Once image has loaded, create flipped one
+  // Once tilemap has loaded, create flipped one
   gs.tilemap=new Image;
   gs.tilemap.onload=function()
   {
-    // Create a flipped version of the spritesheet
+    // Create a flipped version of the tilemap
     // https://stackoverflow.com/questions/21610321/javascript-horizontally-flip-an-image-object-and-save-it-into-a-new-image-objec
     var c=document.createElement('canvas');
     var ctx=c.getContext('2d');
@@ -536,36 +604,19 @@ chipt.start(); // TODO
     gs.tilemapflip.onload=function()
     {
       gs.tilesloaded=true;
-
-      if (gs.spritesloaded)
-        start();
     };
     gs.tilemapflip.src=c.toDataURL();
   };
   gs.tilemap.src=PNGPREFIX+tilemap;
 
-  // Once image has loaded, create flipped one
+  // Once sprite image has loaded, create individual sprites
   gs.spritesheet=new Image;
   gs.spritesheet.onload=function()
   {
-    // Create a flipped version of the spritesheet
-    // https://stackoverflow.com/questions/21610321/javascript-horizontally-flip-an-image-object-and-save-it-into-a-new-image-objec
-    var c=document.createElement('canvas');
-    var ctx=c.getContext('2d');
-    c.width=gs.spritesheet.width;
-    c.height=gs.spritesheet.height;
-    ctx.scale(-1, 1);
-    ctx.drawImage(gs.spritesheet, -gs.spritesheet.width, 0);
+    gs.spritesloaded=true;
 
-    gs.spritesheetflip=new Image;
-    gs.spritesheetflip.onload=function()
-    {
-      gs.spritesloaded=true;
-
-      if (gs.tilesloaded)
-        start();
-    };
-    gs.spritesheetflip.src=c.toDataURL();
+    // Draw all sprite frames to generate individual bitmaps
+    createsprites();
   };
   gs.spritesheet.src=PNGPREFIX+spritesheet;
 }
