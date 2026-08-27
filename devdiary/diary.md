@@ -58,3 +58,13 @@ Added [animation frame callback](https://developer.mozilla.org/en-US/docs/Web/AP
 25th August
 -----------
 Worked on unicorn character. Separated front and rear legs, developed walk animation by drawing all components of unicorn from spritesheet and rotating legs as required using anchor points on the body and leg sections.
+
+26th August
+-----------
+Tested minified version and found the music wasn't working. This was due to the note frequency table keys being "optimised" which broke the lookups from melody and bassline sequences because the key names no longer existed. The fix was to change the frequency table keys to be strings.
+
+Tried to simplfy drawing of unicorn character so that instead of drawing the whole character every frame (using each of the individual parts including rotates and translations to put the legs in the right place/pose) I could do this create step once then use capture and use the generated bitmap from then on for drawing  (likely a slight performance increase too). In theory I could also horizontally flip each pose much easier than working out how to draw the character from scratch each time but the other way around. However I ended up breaking it completely.
+
+27th August
+-----------
+With a fresh head and more sleep I decided to try to get character drawing working the way I had intended to yesterday. Firstly it seemed that the rotate and translate steps hen drawing the legs were causing issues - but it was actually becuase I had a save/restore canvas before and after the translations and the restore was being done to a different canvas (due to copy/paste typo). However making a large spritesheet and drawing all the poses onto it, then extracting them using getImageData() worked better. I then tried to flip all the poses, however this failed to work because putImageData() doesn't honour translations like drawImage() does. Once I figured this out, it all started working as I originally wanted.
