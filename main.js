@@ -72,6 +72,7 @@ var gs={
   hs:0, // horizontal speed
   jump:false, // jumping
   fall:false, // falling
+  duck:false, // ducking
   dir:0, // direction when moving (-1=left, 0=none, 1=right)
   speed:MOVESPEED, // walking speed
   jumpspeed:JUMPSPEED, // jumping speed
@@ -362,11 +363,10 @@ function groundcheck()
     gs.jump=false;
     gs.fall=false;
 
-    // Check for jump pressed
-    if ((ispressed(KEYUP)) || (ispressed(KEYACTION)))
+    // Check for jump pressed, when not ducking
+    if (((ispressed(KEYUP)) || (ispressed(KEYACTION))) && (!gs.duck))
     {
       gs.jump=true;
-
       gs.vs=-gs.jumpspeed;
     }
   }
@@ -450,6 +450,18 @@ function collisioncheck()
 // Slow the player using friction
 function standcheck()
 {
+  // Check for ducking, or injured
+  if (ispressed(KEYDOWN))
+  {
+    gs.duck=true;
+    gs.speed=0;
+  }
+  else
+  {
+    gs.duck=false;
+    gs.speed=MOVESPEED;
+  }
+
   // When no horizontal movement pressed, slow down by friction
   if (((!ispressed(KEYLEFT)) && (!ispressed(KEYRIGHT))) ||
       ((ispressed(KEYLEFT)) && (ispressed(KEYRIGHT))))
@@ -624,6 +636,9 @@ function redraw()
   else
     if (gs.fall)
     drawsprite(gs.x, gs.y+1, 8);
+  else
+    if (gs.duck)
+    drawsprite(gs.x, gs.y+10, 7);
   else
     drawsprite(gs.x, gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
 }
