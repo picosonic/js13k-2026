@@ -102,6 +102,9 @@ var gs={
   // Characters
   chars:[],
 
+  // Particles
+  particles:[], // an array of particles for explosion frage, footprint / jump dust
+
   // Game state
   state:STATEINTRO, // state machine
 
@@ -364,6 +367,10 @@ function groundcheck()
   // Check if we are on the ground
   if (playercollide(gs.x, gs.y+1))
   {
+    // If we just hit the ground after falling, create a few particles under foot
+    if (gs.fall==true)
+      generateparticles(gs.x+(SPRITEWIDTH/2), gs.y+SPRITEHEIGHT, 4, 4, {r:170, g:170, b:170});
+
     gs.vs=0;
     gs.jump=false;
     gs.fall=false;
@@ -509,6 +516,46 @@ function standcheck()
   }
 }
 
+// Generate some particles around an origin
+function generateparticles(cx, cy, mt, count, rgb)
+{
+  for (var i=0; i<count; i++)
+  {
+    var ang=(Math.floor(rng()*360)); // angle to eminate from
+    var t=Math.floor(rng()*mt); // travel from centre
+    var r=rgb.r||(rng()*255);
+    var g=rgb.g||(rng()*255);
+    var b=rgb.b||(rng()*255);
+
+    gs.particles.push({x:cx, y:cy, ang:ang, t:t, r:r, g:g, b:b, a:1.0, s:(rng()<0.05)?2:1});
+  }
+}
+
+// Do processing for particles
+function particlecheck()
+{
+  var i=0;
+
+  // Process particles
+  for (i=0; i<gs.particles.length; i++)
+  {
+    // Move particle
+    gs.particles[i].t+=0.5;
+    gs.particles[i].y+=(gs.gravity*2);
+
+    // Decay particle
+    gs.particles[i].a-=0.007;
+  }
+
+  // Remove particles which have decayed
+  i=gs.particles.length;
+  while (i--)
+  {
+    if (gs.particles[i].a<=0)
+      gs.particles.splice(i, 1);
+  }
+}
+
 // Update player movements
 function updatemovements()
 {
@@ -526,6 +573,9 @@ function updatemovements()
 
   // If no input detected, slow the player using friction
   standcheck();
+
+  // Check for particle usage
+  particlecheck();
 
   // When a movement key is pressed, adjust players speed and direction
   if (gs.keystate!=KEYNONE)
@@ -574,6 +624,30 @@ function drawchars()
 {
   for (var id=0; id<gs.chars.length; id++)
     drawspritetile(gs.chars[id]);
+}
+
+// Draw single particle
+function drawparticle(particle)
+{
+  var x=particle.x+(particle.t*Math.cos(particle.ang));
+  var y=particle.y+(particle.t*Math.sin(particle.ang));
+
+  // Clip to what's visible
+    if (((Math.floor(x)-gs.xoffset)<0) && // clip left
+    ((Math.floor(x)-gs.xoffset)>XMAX) && // clip right
+    ((Math.floor(y)-gs.yoffset)<0) && // clip top
+    ((Math.floor(y)-gs.yoffset)>YMAX))   // clip bottom
+  return;
+
+  gs.ctx.fillStyle="rgba("+particle.r+","+particle.g+","+particle.b+","+particle.a+")";
+  gs.ctx.fillRect(Math.floor(x)-gs.xoffset, Math.floor(y)-gs.yoffset, particle.s, particle.s);
+}
+
+// Draw particles
+function drawparticles()
+{
+  for (var i=0; i<gs.particles.length; i++)
+    drawparticle(gs.particles[i]);
 }
 
 // Scroll level to player
@@ -642,6 +716,9 @@ function redraw()
 
   // Draw the characters
   drawchars();
+
+  // Draw the particles
+  drawparticles();
 
   // Draw unicorn sprite
   if (gs.jump)
