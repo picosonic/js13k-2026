@@ -76,6 +76,7 @@ var gs={
   dir:0, // direction when moving (-1=left, 0=none, 1=right)
   speed:MOVESPEED, // walking speed
   jumpspeed:JUMPSPEED, // jumping speed
+  coyote:0, // coyote timer (time after leaving ground where you can still jump)
   flip:false, // if player is horizontally flipped
   frame:0, // animation frame
 
@@ -356,12 +357,17 @@ function playercollide(x, y)
 // Check if player on the ground or falling
 function groundcheck()
 {
+  // Check for coyote time
+  if (gs.coyote>0)
+    gs.coyote--;
+
   // Check if we are on the ground
   if (playercollide(gs.x, gs.y+1))
   {
     gs.vs=0;
     gs.jump=false;
     gs.fall=false;
+    gs.coyote=15;
 
     // Check for jump pressed, when not ducking
     if (((ispressed(KEYUP)) || (ispressed(KEYACTION))) && (!gs.duck))
@@ -372,6 +378,13 @@ function groundcheck()
   }
   else
   {
+    // Check for jump pressed, when not ducking, and coyote time not expired
+    if (((ispressed(KEYUP)) || (ispressed(KEYACTION))) && (!gs.duck) && (gs.jump==false) && (gs.coyote>0))
+    {
+      gs.jump=true;
+      gs.vs=-gs.jumpspeed;
+    }
+
     // We're in the air, increase falling speed until we're at terminal velocity
     if (gs.vs<gs.terminalvelocity)
       gs.vs+=gs.gravity;
