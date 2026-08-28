@@ -6,14 +6,16 @@ const XMAX=320;
 const YMAX=180;
 const TARGETFPS=60;
 
+const TILEWIDTH=18;
+const TILEHEIGHT=18;
+const TILEWIDTH2=TILEWIDTH/2;
+const TILEHEIGHT2=TILEHEIGHT/2;
+const TILESPERROW=20;
+
 const SPRITEWIDTH=35;
 const SPRITEHEIGHT=34;
-const TILEWIDTH=16;
-const TILEHEIGHT=16;
-const TILESPERROW=8;
 
-const MOVESPEED=4;
-const JUMPSPEED=6;
+const STATEINTRO=0;
 
 const KEYNONE=0;
 const KEYLEFT=1;
@@ -22,11 +24,16 @@ const KEYRIGHT=4;
 const KEYDOWN=8;
 const KEYACTION=16;
 
+const MOVESPEED=3;
+const JUMPSPEED=6; // jump height
+
+// Tile ids
 const TILENONE=0;
 
 const BGCOLOUR="rgb(128,168,209)";
 
 const PNGPREFIX="data:image/png;base64,";
+const CHAROFFS=256;
 
 // Game state
 var gs={
@@ -39,7 +46,7 @@ var gs={
   frametimes:[], // array of frame times
 
   // physics in pixels per frame @ 60fps
-  gravity:0.4,
+  gravity:0.25,
   terminalvelocity:10,
   friction:1,
 
@@ -50,7 +57,6 @@ var gs={
 
   // Tilemap image
   tilemap:null,
-  tilemapflip:null,
   tilesloaded:false,
   spritesheet:null,
   sprites:[],
@@ -76,6 +82,9 @@ var gs={
   level:0, // Level number (0 based)
   width:0, // Width of level in tiles
   height:0, // Height of level in tiles
+  xoffset:0, // current view offset from left (horizontal scroll)
+  yoffset:0, // current view offset from top (vertical scroll)
+  score:0, // score for the level
 
   // Input
   keystate:KEYNONE,
@@ -84,6 +93,15 @@ var gs={
   gamepadbuttons:[], // Button mapping
   gamepadaxes:[], // Axes mapping
   gamepadaxesval:[], // Axes values
+
+  // Tiles
+  tiles:[], // copy of current level (to allow destruction)
+
+  // Characters
+  chars:[],
+
+  // Game state
+  state:STATEINTRO, // state machine
 
   // Timeline for animation
   timeline:new timelineobj(), // timeline for general animation
@@ -128,7 +146,33 @@ function playfieldsize()
 // Draw tile
 function drawtile(tileid, x, y)
 {
-  gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x, y, TILEWIDTH, TILEHEIGHT);
+  // Don't draw tile 0 (background)
+  if (tileid==0) return;
+
+  // Clip to what's visible
+  if (((x-gs.xoffset)<-TILEWIDTH) && // clip left
+      ((x-gs.xoffset)>XMAX) && // clip right
+      ((y-gs.yoffset)<-TILEHEIGHT) && // clip top
+      ((y-gs.yoffset)>YMAX))   // clip bottom
+    return;
+
+  gs.ctx.drawImage(gs.tilemap, (tileid*TILEWIDTH) % (TILESPERROW*TILEWIDTH), Math.floor((tileid*TILEWIDTH) / (TILESPERROW*TILEWIDTH))*TILEHEIGHT, TILEWIDTH, TILEHEIGHT, x-gs.xoffset, y-gs.yoffset, TILEWIDTH, TILEHEIGHT);
+}
+
+// Draw sprite tile
+function drawspritetile(sprite)
+{
+  // Don't draw sprite 0 (background)
+  if (sprite.id==0) return;
+
+  // Clip to what's visible
+  if (((Math.floor(sprite.x)-gs.xoffset)<-TILEWIDTH) && // clip left
+      ((Math.floor(sprite.x)-gs.xoffset)>XMAX) && // clip right
+      ((Math.floor(sprite.y)-gs.yoffset)<-TILEHEIGHT) && // clip top
+      ((Math.floor(sprite.y)-gs.yoffset)>YMAX))   // clip bottom
+    return;
+
+  drawtile(sprite.id, sprite.x, sprite.y);
 }
 
 function drawleg(ctx, x, y, leg, angle)
@@ -144,42 +188,27 @@ function drawleg(ctx, x, y, leg, angle)
   ctx.restore();
 }
 
-// Draw sprite in current state
+// Draw unicorn sprite
 function drawsprite(x, y, pose)
 {
-  try
+  gs.ctx.drawImage(gs.flip?gs.spritesflip[pose]:gs.sprites[pose], x-gs.xoffset, y-gs.yoffset);
+}
+
+function getImageURL(imgData, width, height, flip)
+{
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+
+  canvas.width = width;
+  canvas.height = height;
+
+  if (flip)
   {
-    if (gs.flip)
-      gs.ctx.drawImage(gs.spritesflip[pose], x, y);
-    else
-      gs.ctx.drawImage(gs.sprites[pose], x, y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(imgData, 0, 0, -width, height);
   }
-  catch(e){}
-}
-
-function getImageURL(imgData, width, height)
-{
-  var canvas = document.createElement('canvas');
-  var ctx = canvas.getContext('2d');
-
-  canvas.width = width;
-  canvas.height = height;
-
-  ctx.putImageData(imgData, 0, 0);
-
-  return canvas.toDataURL();
-}
-
-function getFlippedImageURL(img, width, height)
-{
-  var canvas = document.createElement('canvas');
-  var ctx = canvas.getContext('2d');
-
-  canvas.width = width;
-  canvas.height = height;
-
-  ctx.scale(-1, 1);
-  ctx.drawImage(img, -width, 0);
+  else
+    ctx.putImageData(imgData, 0, 0);
 
   return canvas.toDataURL();
 }
@@ -244,16 +273,16 @@ function createsprites()
     // Capture sprite
     var SpriteData=ctx.getImageData((pose*SPRITEWIDTH), 0, SPRITEWIDTH, SPRITEHEIGHT);
     var sprite=new Image;
-    sprite.src=getImageURL(SpriteData, SPRITEWIDTH, SPRITEHEIGHT);
+    sprite.src=getImageURL(SpriteData, SPRITEWIDTH, SPRITEHEIGHT, false);
 
     // Save sprite
     gs.sprites.push(sprite);
 
     // Capture flipped sprite
     var spriteflip=new Image;
-    spriteflip.src=getFlippedImageURL(sprite, SPRITEWIDTH, SPRITEHEIGHT);
+    spriteflip.src=getImageURL(gs.sprites[pose], SPRITEWIDTH, SPRITEHEIGHT, true);
 
-    // Save sprite
+    // Save flipped sprite
     gs.spritesflip.push(spriteflip);
   }
 
@@ -263,25 +292,50 @@ function createsprites()
 // Check if player has left the map
 function offmapcheck()
 {
-//TODO remove
-return;
-
-  if ((gs.x<(0-TILEWIDTH)) || ((gs.x+1)>gs.width*TILEWIDTH) || (gs.y>gs.height*TILEHEIGHT))
+  if ((gs.x<(0-SPRITEWIDTH)) || ((gs.x+1)>gs.width*SPRITEWIDTH) || (gs.y>gs.height*SPRITEHEIGHT))
   {
     gs.x=gs.sx;
     gs.y=gs.sy;
     gs.speed=MOVESPEED;
+
+    scrolltoplayer(false);
   }
+}
+
+// Check if area a overlaps with area b
+function overlap(ax, ay, aw, ah, bx, by, bw, bh)
+{
+  // Check horizontally
+  if ((ax<bx) && ((ax+aw))<=bx) return false; // a too far left of b
+  if ((ax>bx) && ((bx+bw))<=ax) return false; // a too far right of b
+
+  // Check vertically
+  if ((ay<by) && ((ay+ah))<=by) return false; // a too far above b
+  if ((ay>by) && ((by+bh))<=ay) return false; // a too far below b
+
+  return true;
 }
 
 function collide(px, py, pw, ph)
 {
   // Check for horizontal screen edge collision
-  if (px<=(0-(TILEWIDTH/5))) return true;
-  if ((px+(TILEWIDTH/3))>=(gs.width*TILEWIDTH)) return true;
+  if (px<=(0-(SPRITEWIDTH/5))) return true;
+  if ((px+(SPRITEWIDTH/3))>=(gs.width*SPRITEWIDTH)) return true;
 
-  // Check for vertical screen edge collision
-  if (py>(gs.height*TILEHEIGHT)) return true;
+  // Look through all the tiles for a collision
+  for (var y=0; y<gs.height; y++)
+  {
+    for (var x=0; x<gs.width; x++)
+    {
+      var tile=parseInt(gs.tiles[(y*gs.width)+x]||1, 10);
+
+      if ((tile-1)!=0)
+      {
+        if (overlap(px, py, pw, ph, x*TILEWIDTH, y*TILEHEIGHT, TILEWIDTH, TILEHEIGHT))
+          return tile;
+      }
+    }
+  }
 
   return TILENONE;
 }
@@ -289,7 +343,7 @@ function collide(px, py, pw, ph)
 // Collision check with player hitbox, return tile
 function playerlook(x, y)
 {
-  return collide(x+(TILEWIDTH/3), y+((TILEHEIGHT/5)*2), TILEWIDTH/3, (TILEHEIGHT/5)*3);
+  return collide(x+(SPRITEWIDTH/3), y+((SPRITEHEIGHT/5)*2), SPRITEWIDTH/3, (SPRITEHEIGHT/5)*3);
 }
 
 // Collision check with player hitbox, true/flase
@@ -348,6 +402,24 @@ function collisioncheck()
 {
   var loop;
 
+  // Check for horizontal collisions
+  if ((gs.hs!=0) && (playercollide(gs.x+gs.hs, gs.y)))
+  {
+    loop=TILEWIDTH;
+    // A collision occured, so move the character until it hits
+    while ((!playercollide(gs.x+(gs.hs>0?1:-1), gs.y)) && (loop>0))
+    {
+      gs.x+=(gs.hs>0?1:-1);
+      loop--;
+    }
+
+    // Stop horizontal movement
+    gs.hs=0;
+    gs.speed=MOVESPEED;
+    gs.runtimer=0;
+  }
+  gs.x+=Math.floor(gs.hs);
+
   // Check for vertical collisions
   if ((gs.vs!=0) && (playercollide(gs.x, gs.y+gs.vs)))
   {
@@ -375,6 +447,7 @@ function collisioncheck()
   gs.y=Math.floor(gs.y+gs.vs);
 }
 
+// Slow the player using friction
 function standcheck()
 {
   // When no horizontal movement pressed, slow down by friction
@@ -414,28 +487,6 @@ function standcheck()
 // Update player movements
 function updatemovements()
 {
-  // Go left if moving left
-  if (gs.dir==-1)
-    gs.x-=MOVESPEED;
-
-  // Check for LHS collision
-  if (gs.x<(0-TILEWIDTH))
-  {
-    gs.x=0-TILEWIDTH;
-    gs.dir=0;
-  }
-
-  // Go right if moving right
-  if (gs.dir==1)
-    gs.x+=MOVESPEED;
-
-  // Check for RHS collision
-  if (gs.x>(XMAX-TILEWIDTH))
-  {
-    gs.x=XMAX-TILEWIDTH;
-    gs.dir=0;
-  }
-
   // Check if player has left the map
   offmapcheck();
 
@@ -481,19 +532,149 @@ function update()
   if (gs.frame>=(5*6)) gs.frame=1; 
 }
 
+function drawlevel()
+{
+  for (var y=0; y<gs.height; y++)
+  {
+    for (var x=0; x<gs.width; x++)
+    {
+      var tile=parseInt(gs.tiles[(y*gs.width)+x]||1, 10);
+      drawtile(tile-1, x*TILEWIDTH, y*TILEHEIGHT);
+    }
+  }
+}
+
+// Draw chars
+function drawchars()
+{
+  for (var id=0; id<gs.chars.length; id++)
+    drawspritetile(gs.chars[id]);
+}
+
+// Scroll level to player
+function scrolltoplayer(dampened)
+{
+  var xmiddle=Math.floor((XMAX-TILEWIDTH)/2);
+  var ymiddle=Math.floor((YMAX-TILEHEIGHT)/2);
+  var maxxoffs=((gs.width*TILEWIDTH)-XMAX);
+  var maxyoffs=((gs.height*TILEHEIGHT)-YMAX);
+
+  // Work out where x and y offsets should be
+  var newxoffs=gs.x-xmiddle;
+  var newyoffs=gs.y-ymiddle;
+
+  // Restrict right side to edge of level
+  if (newxoffs>maxxoffs) newxoffs=maxxoffs;
+  if (newyoffs>maxyoffs) newyoffs=maxyoffs;
+
+  // Restrict left side to edge of level
+  if (newxoffs<0) newxoffs=0;
+  if (newyoffs<0) newyoffs=0;
+
+  // Determine if xoffset should be changed
+  if (newxoffs!=gs.xoffset)
+  {
+    if (dampened)
+    {
+      var xdelta=1;
+
+      if (Math.abs(gs.xoffset-newxoffs)>(XMAX/5)) xdelta=Math.abs(Math.floor(gs.hs));
+
+      gs.xoffset+=newxoffs>gs.xoffset?xdelta:-xdelta;
+    }
+    else
+      gs.xoffset=newxoffs;
+  }
+
+  // Determine if yoffset should be changed
+  if (newyoffs!=gs.yoffset)
+  {
+    if (dampened)
+    {
+      var ydelta=1;
+
+      if (Math.abs(gs.yoffset-newyoffs)>(YMAX/5)) ydelta=Math.abs(Math.floor(gs.vs));
+
+      gs.yoffset+=newyoffs>gs.yoffset?ydelta:-ydelta;
+    }
+    else
+      gs.yoffset=newyoffs;
+  }
+}
+
 // Redraw game frame
 function redraw()
 {
+  // Scroll to keep player in view
+  scrolltoplayer(false);
+
+  // Clear the canvas
   gs.ctx.fillStyle=BGCOLOUR;
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
 
+  // Draw the level
+  drawlevel();
+
+  // Draw the characters
+  drawchars();
+
+  // Draw unicorn sprite
   if (gs.jump)
-    drawsprite(gs.x, gs.y, 7);
+    drawsprite(gs.x, gs.y+1, 7);
   else
     if (gs.fall)
-    drawsprite(gs.x, gs.y, 8);
+    drawsprite(gs.x, gs.y+1, 8);
   else
-    drawsprite(gs.x, gs.y, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+    drawsprite(gs.x, gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+}
+
+// Load level
+function loadlevel(level)
+{
+  // Make sure it exists
+  if ((level>=0) && (levels.length-1<level)) return;
+
+  // Set current level to new one
+  gs.level=level;
+
+  // Deep copy level tiles list to allow changes
+  gs.tiles=JSON.parse(JSON.stringify(levels[gs.level].level));
+
+  // Remove anything over threshold
+  gs.tiles.forEach((tileid, index) => {
+    if (parseInt(tileid||0, 10)>CHAROFFS) gs.tiles[index]=0;
+  });
+
+  // Get width/height of new level
+  gs.width=parseInt(levels[gs.level].width, 10);
+  gs.height=parseInt(levels[gs.level].height, 10);
+
+  // Start with empty set of characters
+  gs.chars=[];
+
+  // Populate chars (non solid tiles)
+  for (var y=0; y<gs.height; y++)
+  {
+    for (var x=0; x<gs.width; x++)
+    {
+      var tile=parseInt(levels[gs.level].level[(y*gs.width)+x]||0, 10);
+
+      if (tile<CHAROFFS) continue;
+      tile-=CHAROFFS;
+
+      if (tile!=0)
+      {
+        var obj={id:(tile-1), x:(x*TILEWIDTH), y:(y*TILEHEIGHT), flip:false, hs:0, vs:0, dwell:0, del:false, ttl:0};
+
+        switch (tile-1)
+        {
+          default:
+            gs.chars.push(obj); // Everything else
+            break;
+        }
+      }
+    }
+  }
 }
 
 // Request animation frame callback
@@ -516,7 +697,7 @@ function rafcallback(timestamp)
     gs.acc+=((timestamp-gs.lasttime) / 1000);
 
     // If it's more than 15 seconds since last call, reset
-    if ((gs.acc>gs.step) && ((gs.acc/gs.step)>(60*15)))
+    if ((gs.acc>gs.step) && ((gs.acc/gs.step)>(TARGETFPS*15)))
       gs.acc=gs.step*2;
 
     // Process "steps" since last call
@@ -542,9 +723,7 @@ function start()
 {
   gs.timeline.reset();
 
-  gs.width=20;
-  gs.height=9;
-
+  loadlevel(gs.level);
   window.requestAnimationFrame(rafcallback);
 }
 

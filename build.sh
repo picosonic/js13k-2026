@@ -22,6 +22,46 @@ indexcat="${buildpath}/index.html"
 assetsrc="assets/tilemap.png"
 assetsprsrc="assets/spritesheet.png"
 assetjs="tilemap.js"
+leveljs="levels.js"
+
+# See if the levels asset need to be rebuilt
+mostrecentlevel=`ls -larth assets/level*.tmx | tail -1 | awk '{ print $NF }'`
+srcdate=`stat -c %Y ${mostrecentlevel} 2>/dev/null`
+destdate=`stat -c %Y ${leveljs} 2>/dev/null`
+
+# If no js asset found, force build
+if [ "${destdate}" == "" ]
+then
+  destdate=0
+fi
+
+# When source is newer, rebuild
+if [ ${srcdate} -gt ${destdate} ]
+then
+  echo -n "Rebuilding levels..."
+
+  # Clear old dest
+  echo -n "" > "${leveljs}"
+
+  # Start new file
+  echo -n "var levels=[" > "${leveljs}"
+  first="true"
+  for file in `ls assets/level*.tmx | sort -V`
+  do
+    if [ "$first" = "false" ]
+    then
+      echo -n "," >> "${leveljs}"
+    fi
+
+    php compactlevel.php "${file}" | sed 's/,0,/,,/g' | sed 's/,0,/,,/g' | sed 's/\[0,/\[,/g' | sed 's/,0\]/,\]/g' | sed 's/"width"/width/g' | sed 's/"height"/height/g' | sed 's/"title"/title/g' | sed 's/"desc"/desc/g' | sed 's/"doors"/doors/g' >> "${leveljs}"
+
+    first="false"
+  done
+
+  echo -n "];" >> "${leveljs}"
+
+  echo "done"
+fi
 
 # See if the tilemaps asset needs to be rebuilt
 srcdate=`stat -c %Y ${assetsrc} 2>/dev/null`
@@ -74,7 +114,7 @@ mkdir "${buildpath}"
 # Concatenate the JS files
 echo "Concatenating JS"
 touch "${jscat}" >/dev/null 2>&1
-for file in "${assetjs}" "inputs.js" "chipper.js" "timeline.js" "main.js"
+for file in "${assetjs}" "${leveljs}" "chipper.js" "timeline.js" "inputs.js" "main.js"
 do
   cat "${file}" >> "${jscat}"
 done

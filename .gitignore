@@ -3,6 +3,7 @@ tmpbuild
 
 # Built files
 tilemap.js
+levels.js
 
 # Other folders
 closure-compiler
