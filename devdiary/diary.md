@@ -88,3 +88,7 @@ Added char animation for flag to wave, coins to rotate, and water to flow. Made 
 Fix broken rainbow trail and broken sprite animations. Added tile id constants ready for logic code. Added placeholder for hurt time, so that we can't be hurt more and the player will flash for a period of time to indicate temporary invulnerability.
 
 Set starting point for main character to they don't always start at top left. Added char collision detection so that keys, coins and gems can be collected. When player is standing on blocks with faces they now lower and grimmace.
+
+When water is running from pipes, prevent unicorn from passing. Buttons can be used to turn off the water, but it only stays off until the button pops back up. However if the unicorn is in the water flow path it won't turn back on until the unicorn is clear.
+
+Collecting keys now unlocks all locks, these will be used (like the running water) as a way to add complexity to the player's journey.
