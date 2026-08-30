@@ -16,6 +16,11 @@ const SPRITEWIDTH=35;
 const SPRITEHEIGHT=34;
 
 const STATEINTRO=0;
+const STATEMENU=1;
+const STATEPLAYING=2;
+const STATENEWLEVEL=3;
+const STATECOMPLETE=4;
+const STATEFAIL=5;
 
 const KEYNONE=0;
 const KEYLEFT=1;
@@ -26,14 +31,46 @@ const KEYACTION=16;
 
 const MOVESPEED=3;
 const JUMPSPEED=6; // jump height
+const MAXLIVES=(7*2);
 
 // Tile ids
 const TILENONE=0;
+const TILEUNICORN=4;
+const TILEGEM=5;
+const TILELOCK=8; // Unlocked by key
+const TILERAINBOW=24;
+const TILERAINBOW2=25;
+const TILEKEY=28;
+const TILECOIN=29;
+const TILECOIN2=30;
+const TILEHEART=65; // Adds half a heart when collected
+const TILEHEARTHALF=66;
+const TILEHEARTEMPTY=67;
+const TILESPIKES=68;
+const TILEBOB=124;
+const TILEBOB2=125;
+const TILEBOBSLEEP=126;
+const TILEPUMPKIN=127;
+const TILEBLOCKSQUASH=130; // Shown when standing on block
+const TILEBLOCK=131;
+const TILESNOWMAN=132;
+const TILEBUTTON=133; // up
+const TILEBUTTON2=134; // down
 
 const BGCOLOUR="rgb(128,168,209)";
 
 const PNGPREFIX="data:image/png;base64,";
 const CHAROFFS=256;
+
+const RAINBOWCOLS=[
+  {r:255,g:0,b:0},   // Red
+  {r:255,g:127,b:0}, // Orange
+  {r:255,g:255,b:0}, // Yellow
+  {r:0,g:255,b:0},   // Green
+  {r:0,g:0,b:255},   // Blue
+  {r:75,g:0,b:130},  // Indigo
+  {r:148,g:0,b:211}  // Violet
+];
 
 // Game state
 var gs={
@@ -56,7 +93,7 @@ var gs={
   scale:1, // Changes when resizing window
 
   // Tilemap image
-  tilemap:null,
+  tilemap:null, // main tileset
   tilesloaded:false,
   spritesheet:null,
   sprites:[],
@@ -72,6 +109,7 @@ var gs={
   hs:0, // horizontal speed
   jump:false, // jumping
   fall:false, // falling
+  htime:0, // hurt timer
   duck:false, // ducking
   dir:0, // direction when moving (-1=left, 0=none, 1=right)
   speed:MOVESPEED, // walking speed
@@ -79,6 +117,9 @@ var gs={
   coyote:0, // coyote timer (time after leaving ground where you can still jump)
   flip:false, // if player is horizontally flipped
   frame:0, // animation frame
+  trail:0, // trail colour
+  lives:MAXLIVES,
+  key:0, // number of keys collected
 
   // Level attributes
   level:0, // Level number (0 based)
@@ -101,9 +142,10 @@ var gs={
 
   // Characters
   chars:[],
+  anim:8, // time until next character animation frame
 
   // Particles
-  particles:[], // an array of particles for explosion frage, footprint / jump dust
+  particles:[], // an array of particles
 
   // Game state
   state:STATEINTRO, // state machine
@@ -112,7 +154,10 @@ var gs={
   timeline:new timelineobj(), // timeline for general animation
 
   // Debug flag
-  debug:false
+  debug:false,
+
+  // True when music has been started (by user interaction)
+  music:false
 };
 
 // Random number generator
@@ -229,10 +274,10 @@ function createsprites()
   const frontlegbent={x:14,y:24,w:8,h:8,a:{x:1,y:1}};
 
   const poses=[
-    // Standing
+    // Standing 0
     {nf:frontleg, nfa:0, ff:frontleg, ffa:0, nha:0, fha:0},
 
-    // Running
+    // Running 1..6
     {nf:frontleg, nfa:310, ff:frontleg, ffa:350, nha:30, fha:10},
     {nf:frontleg, nfa:330, ff:frontlegbent, ffa:80, nha:20, fha:5},
     {nf:frontlegbent, nfa:60, ff:frontlegbent, ffa:40, nha:330, fha:350},
@@ -240,10 +285,10 @@ function createsprites()
     {nf:frontlegbent, nfa:0, ff:frontleg, ffa:320, nha:0, fha:50},
     {nf:frontleg, nfa:290, ff:frontleg, ffa:330, nha:60, fha:40},
 
-    // Jumping
+    // Jumping 7
     {nf:frontleg, nfa:270, ff:frontleg, ffa:270, nha:60, fha:50},
     
-    // Falling
+    // Falling 8
     {nf:frontlegbent, nfa:0, ff:frontlegbent, ffa:0, nha:0, fha:0}
   ];
 
@@ -278,17 +323,19 @@ function createsprites()
     // Capture sprite
     var SpriteData=ctx.getImageData((pose*SPRITEWIDTH), 0, SPRITEWIDTH, SPRITEHEIGHT);
     var sprite=new Image;
+    sprite.onload=function()
+    {
+      // Save sprite
+      gs.sprites.push(this);
+
+      // Capture flipped sprite
+      var spriteflip=new Image;
+      spriteflip.src=getImageURL(this, SPRITEWIDTH, SPRITEHEIGHT, true);
+
+      // Save flipped sprite
+      gs.spritesflip.push(spriteflip);
+    };
     sprite.src=getImageURL(SpriteData, SPRITEWIDTH, SPRITEHEIGHT, false);
-
-    // Save sprite
-    gs.sprites.push(sprite);
-
-    // Capture flipped sprite
-    var spriteflip=new Image;
-    spriteflip.src=getImageURL(gs.sprites[pose], SPRITEWIDTH, SPRITEHEIGHT, true);
-
-    // Save flipped sprite
-    gs.spritesflip.push(spriteflip);
   }
 
   start();
@@ -302,6 +349,11 @@ function offmapcheck()
     gs.x=gs.sx;
     gs.y=gs.sy;
     gs.speed=MOVESPEED;
+    gs.coyote=0;
+    gs.htime=0;
+
+    if (gs.lives>0)
+      gs.lives-=0.5;
 
     scrolltoplayer(false);
   }
@@ -375,6 +427,7 @@ function groundcheck()
     gs.jump=false;
     gs.fall=false;
     gs.coyote=15;
+    var tilebelow=playerlook(gs.x, gs.y+1)-1;
 
     // Check for jump pressed, when not ducking
     if (((ispressed(KEYUP)) || (ispressed(KEYACTION))) && (!gs.duck))
@@ -516,6 +569,45 @@ function standcheck()
   }
 }
 
+// Move animation frame onwards
+function updateanimation()
+{
+  if (gs.anim==0)
+  {
+    // Char animation
+    for (var id=0; id<gs.chars.length; id++)
+    {
+      switch (gs.chars[id].id)
+      {
+        // Flag
+        case 51: gs.chars[id].id=31; break;
+        case 31: gs.chars[id].id=51; break;
+
+        // Coins
+        case 29: gs.chars[id].id=30; break;
+        case 30: gs.chars[id].id=29; break;
+
+        // Water
+        case 53: gs.chars[id].id=33; break;
+        case 33: gs.chars[id].id=53; break;
+        case 35: gs.chars[id].id=34; break;
+        case 34: gs.chars[id].id=35; break;
+        case 55: gs.chars[id].id=54; break;
+        case 54: gs.chars[id].id=55; break;
+        case 75: gs.chars[id].id=74; break;
+        case 74: gs.chars[id].id=75; break;
+
+        default:
+          break;
+      }
+    }
+
+    gs.anim=8;
+  }
+  else
+    gs.anim--;
+}
+
 // Generate some particles around an origin
 function generateparticles(cx, cy, mt, count, rgb)
 {
@@ -523,9 +615,9 @@ function generateparticles(cx, cy, mt, count, rgb)
   {
     var ang=(Math.floor(rng()*360)); // angle to eminate from
     var t=Math.floor(rng()*mt); // travel from centre
-    var r=rgb.r||(rng()*255);
-    var g=rgb.g||(rng()*255);
-    var b=rgb.b||(rng()*255);
+    var r=rgb.r*(rng()*255);
+    var g=rgb.g*(rng()*255);
+    var b=rgb.b*(rng()*255);
 
     gs.particles.push({x:cx, y:cy, ang:ang, t:t, r:r, g:g, b:b, a:1.0, s:(rng()<0.05)?2:1});
   }
@@ -596,15 +688,110 @@ function updatemovements()
       gs.flip=false;
     }
   }
+
+  // Decrease hurt timer
+  if (gs.htime>0) gs.htime--;
+
+  // Update any animation frames
+  updateanimation();
+}
+
+// Check for collision between player and character/collectable
+function updateplayerchar()
+{
+  // Generate player hitbox
+  var px=gs.x+(SPRITEWIDTH/3);
+  var py=gs.y+((SPRITEHEIGHT/5)*2);
+  var pw=(SPRITEWIDTH/3);
+  var ph=(SPRITEHEIGHT/5)*3;
+  var id=0;
+
+  for (id=0; id<gs.chars.length; id++)
+  {
+    // Check for collision with this char
+    if (overlap(px, py, pw, ph, gs.chars[id].x, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
+    {
+      switch (gs.chars[id].id)
+      {
+        case TILEKEY:
+          gs.key++;
+
+          // Shiny
+          generateparticles(gs.chars[id].x+(TILEWIDTH/2), gs.chars[id].y+(TILEHEIGHT/2), 16, 16, {r:0xff, g:0xff, b:1});
+
+          // Remove from map
+          gs.chars[id].del=true;
+          break;
+
+        case TILECOIN:
+        case TILECOIN2:
+        case TILEGEM:
+          // Remove from map
+          gs.chars[id].del=true;
+          break;
+
+        default:
+          break;
+      }
+    }
+  }
+}
+
+function updatecharAI()
+{
+  // Remove anything marked for deletion
+  var id=gs.chars.length;
+  while (id--)
+  {
+    if (gs.chars[id].del)
+    {
+      if (gs.chars[id].ttl>0)
+        gs.chars[id].ttl--;
+
+      if (gs.chars[id].ttl==0)
+      {
+        switch (gs.chars[id].id)
+        {
+          case TILECOIN:
+          case TILECOIN2:
+            gs.score++;
+            break;
+
+          case TILEGEM:
+            gs.score+=5;
+            break;
+
+          default:
+            break;
+        }
+
+        gs.chars.splice(id, 1);
+      }
+    }
+  }
 }
 
 // Update game state
 function update()
 {
+  // Apply keystate/physics to player
   updatemovements();
 
+  // Update other character movements / AI
+  updatecharAI();
+
+  // Check for player/character/collectable collisions
+  updateplayerchar();
+
   gs.frame++;
-  if (gs.frame>=(5*6)) gs.frame=1; 
+
+  if (gs.frame>=(5*6))
+  {
+    gs.frame=1;
+
+    gs.trail++;
+    if (gs.trail>=RAINBOWCOLS.length) gs.trail=0;
+  }
 }
 
 function drawlevel()
@@ -614,7 +801,20 @@ function drawlevel()
     for (var x=0; x<gs.width; x++)
     {
       var tile=parseInt(gs.tiles[(y*gs.width)+x]||1, 10);
-      drawtile(tile-1, x*TILEWIDTH, y*TILEHEIGHT);
+
+      switch (tile-1)
+      {
+        case TILEBLOCK:
+          if ((overlap(gs.x, gs.y+(SPRITEHEIGHT), SPRITEWIDTH, SPRITEHEIGHT, x*TILEWIDTH, y*TILEHEIGHT, TILEWIDTH, TILEHEIGHT)) && (playerlook(gs.x, gs.y+1)-1==TILEBLOCK))
+            drawtile(TILEBLOCKSQUASH, x*TILEWIDTH, (y*TILEHEIGHT)+3);
+          else
+            drawtile(tile-1, x*TILEWIDTH, y*TILEHEIGHT);
+          break;
+
+        default:
+          drawtile(tile-1, x*TILEWIDTH, y*TILEHEIGHT);
+          break;
+      }
     }
   }
 }
@@ -720,6 +920,10 @@ function redraw()
   // Draw the particles
   drawparticles();
 
+  // Draw the rainbow trail
+  if ((gs.hs!=0) || (gs.vs!=0))
+    generateparticles(gs.x+(SPRITEWIDTH/2), gs.y+(SPRITEHEIGHT/2), 4, 2, RAINBOWCOLS[gs.trail]);
+
   // Draw unicorn sprite
   if (gs.jump)
     drawsprite(gs.x, gs.y+1, 7);
@@ -730,7 +934,7 @@ function redraw()
     if (gs.duck)
     drawsprite(gs.x, gs.y+10, 7);
   else
-    drawsprite(gs.x, gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+    drawsprite(gs.x, playerlook(gs.x, gs.y+1)-1==TILEBLOCK?gs.y+4:gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
 }
 
 // Load level
@@ -773,6 +977,23 @@ function loadlevel(level)
 
         switch (tile-1)
         {
+          case TILEUNICORN:
+            gs.x=obj.x; // Set current position
+            gs.y=obj.y-(TILEHEIGHT);
+
+            gs.sx=gs.x; // Set start position
+            gs.sy=gs.y;
+
+            gs.vs=0; // Start not moving
+            gs.hs=0;
+            gs.jump=false;
+            gs.fall=false;
+            gs.duck=false;
+            gs.dir=0;
+            gs.flip=false;
+            gs.particles=[];
+            break;
+
           default:
             gs.chars.push(obj); // Everything else
             break;
@@ -780,6 +1001,9 @@ function loadlevel(level)
       }
     }
   }
+
+  // Move scroll offset to player with damping disabled
+  scrolltoplayer(false);
 }
 
 // Request animation frame callback

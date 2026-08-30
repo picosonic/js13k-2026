@@ -68,3 +68,23 @@ Tried to simplfy drawing of unicorn character so that instead of drawing the who
 27th August
 -----------
 With a fresh head and more sleep I decided to try to get character drawing working the way I had intended to yesterday. Firstly it seemed that the rotate and translate steps hen drawing the legs were causing issues - but it was actually becuase I had a save/restore canvas before and after the translations and the restore was being done to a different canvas (due to copy/paste typo). However making a large spritesheet and drawing all the poses onto it, then extracting them using getImageData() worked better. I then tried to flip all the poses, however this failed to work because putImageData() doesn't honour translations like drawImage() does. Once I figured this out, it all started working as I originally wanted.
+
+28th August
+-----------
+Added level drawing and navigating. Fixed flipped sprite creation - when drawing onto a flipped canvas, the coordinates also need to be flipped.
+
+Added character ducking and coyote time (being allowed to jump for a short while after leaving a platform)
+
+29th August
+-----------
+Added some more state ready for game statemachine. Determined that lives will show as 7 hearts (one for each colour of rainbow), but will go down in half steps. Added rainbow coloured trail which emits particles when moving that cycle through the rainbow.
+
+Wrestled with flipped sprites being inconsistent, sometimes they are fine, other times not. What seemed to make a difference was putting the storing of sprites into the onload handler and using this to save them (incase the loop moved onwards), then doing the flip on the this object.
+
+Added char animation for flag to wave, coins to rotate, and water to flow. Made alterations to tilemap bitmap, rearranging, reducing e.t.c.
+
+30th August
+-----------
+Fix broken rainbow trail and broken sprite animations. Added tile id constants ready for logic code. Added placeholder for hurt time, so that we can't be hurt more and the player will flash for a period of time to indicate temporary invulnerability.
+
+Set starting point for main character to they don't always start at top left. Added char collision detection so that keys, coins and gems can be collected. When player is standing on blocks with faces they now lower and grimmace.
