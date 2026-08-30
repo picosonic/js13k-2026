@@ -103,6 +103,8 @@ var gs={
   // Main character
   x:0, // x position
   y:0, // y position
+  px:0, // prev x position
+  py:0, // prev y position
   sx:0, // start x position (for current level)
   sy:0, // start y position (for current level)
   vs:0, // vertical speed
@@ -128,6 +130,7 @@ var gs={
   xoffset:0, // current view offset from left (horizontal scroll)
   yoffset:0, // current view offset from top (vertical scroll)
   score:0, // score for the level
+  water:0, // How long flowing water should be off for
 
   // Input
   keystate:KEYNONE,
@@ -287,7 +290,7 @@ function createsprites()
 
     // Jumping 7
     {nf:frontleg, nfa:270, ff:frontleg, ffa:270, nha:60, fha:50},
-    
+
     // Falling 8
     {nf:frontlegbent, nfa:0, ff:frontlegbent, ffa:0, nha:0, fha:0}
   ];
@@ -348,9 +351,12 @@ function offmapcheck()
   {
     gs.x=gs.sx;
     gs.y=gs.sy;
+    gs.px=gs.x;
+    gs.py=gs.y;
     gs.speed=MOVESPEED;
     gs.coyote=0;
     gs.htime=0;
+    gs.water=0;
 
     if (gs.lives>0)
       gs.lives-=0.5;
@@ -475,6 +481,10 @@ function collisioncheck()
 {
   var loop;
 
+  // Save previous position
+  gs.px=gs.x;
+  gs.py=gs.y;
+
   // Check for horizontal collisions
   if ((gs.hs!=0) && (playercollide(gs.x+gs.hs, gs.y)))
   {
@@ -587,15 +597,17 @@ function updateanimation()
         case 29: gs.chars[id].id=30; break;
         case 30: gs.chars[id].id=29; break;
 
-        // Water
-        case 53: gs.chars[id].id=33; break;
+        // Standing water
         case 33: gs.chars[id].id=53; break;
-        case 35: gs.chars[id].id=34; break;
+        case 53: gs.chars[id].id=33; break;
+
+        // Flowing water
         case 34: gs.chars[id].id=35; break;
-        case 55: gs.chars[id].id=54; break;
+        case 35: gs.chars[id].id=34; break;
         case 54: gs.chars[id].id=55; break;
-        case 75: gs.chars[id].id=74; break;
+        case 55: gs.chars[id].id=54; break;
         case 74: gs.chars[id].id=75; break;
+        case 75: gs.chars[id].id=74; break;
 
         default:
           break;
@@ -692,6 +704,37 @@ function updatemovements()
   // Decrease hurt timer
   if (gs.htime>0) gs.htime--;
 
+  // Decrease water timer
+  if (gs.water>0)
+  {
+    gs.water--;
+
+    // If the water is restarting make sure player isn't in the flow
+    if (gs.water==0)
+    {
+      for (var id=0; id<gs.chars.length; id++)
+      {
+        if (overlap(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2), SPRITEWIDTH*2, SPRITEHEIGHT*2, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
+        {
+          switch (gs.chars[id].id)
+          {
+            case 34:
+            case 35:
+            case 54:
+            case 55:
+            case 74:
+            case 75:
+              gs.water=TARGETFPS;
+              break;
+
+            default:
+              break;
+          }
+        }
+      }
+    }
+  }
+
   // Update any animation frames
   updateanimation();
 }
@@ -704,9 +747,8 @@ function updateplayerchar()
   var py=gs.y+((SPRITEHEIGHT/5)*2);
   var pw=(SPRITEWIDTH/3);
   var ph=(SPRITEHEIGHT/5)*3;
-  var id=0;
 
-  for (id=0; id<gs.chars.length; id++)
+  for (var id=0; id<gs.chars.length; id++)
   {
     // Check for collision with this char
     if (overlap(px, py, pw, ph, gs.chars[id].x, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
@@ -721,6 +763,11 @@ function updateplayerchar()
 
           // Remove from map
           gs.chars[id].del=true;
+
+          // Remove all locks from map
+          for (var id2=0; id2<gs.tiles.length; id2++)
+            if (gs.tiles[id2]-1==TILELOCK)
+              gs.tiles[id2]=TILENONE;
           break;
 
         case TILECOIN:
@@ -728,6 +775,27 @@ function updateplayerchar()
         case TILEGEM:
           // Remove from map
           gs.chars[id].del=true;
+          break;
+
+        // Running water
+        case 34:
+        case 35:
+        case 54:
+        case 55:
+        case 74:
+        case 75:
+          if ((gs.water==0) && (gs.hs!=0))
+          {
+            // Move back to previous position
+            gs.x=gs.px;
+            gs.y=gs.py;
+
+            gs.hs=0;
+          }
+          break;
+
+        case TILEBUTTON:
+          gs.water=5*TARGETFPS;
           break;
 
         default:
@@ -823,7 +891,33 @@ function drawlevel()
 function drawchars()
 {
   for (var id=0; id<gs.chars.length; id++)
-    drawspritetile(gs.chars[id]);
+  {
+    switch (gs.chars[id].id)
+    {
+      // Hide water when turned off
+      case 34:
+      case 35:
+      case 54:
+      case 55:
+      case 74:
+      case 75:
+        if (gs.water==0)
+          drawspritetile(gs.chars[id]);
+        break;
+
+      case TILEBUTTON:
+        if (gs.water>0)
+          drawspritetile({id:TILEBUTTON2, x:gs.chars[id].x, y:gs.chars[id].y});
+        else
+          drawspritetile(gs.chars[id]);
+        break;
+
+
+      default:
+        drawspritetile(gs.chars[id]);
+        break;
+    }
+  }
 }
 
 // Draw single particle
@@ -946,6 +1040,9 @@ function loadlevel(level)
   // Set current level to new one
   gs.level=level;
 
+  // Start level with water on
+  gs.water=0;
+
   // Deep copy level tiles list to allow changes
   gs.tiles=JSON.parse(JSON.stringify(levels[gs.level].level));
 
@@ -980,6 +1077,8 @@ function loadlevel(level)
           case TILEUNICORN:
             gs.x=obj.x; // Set current position
             gs.y=obj.y-(TILEHEIGHT);
+            gs.px=gs.x;
+            gs.py=gs.y;
 
             gs.sx=gs.x; // Set start position
             gs.sy=gs.y;
