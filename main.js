@@ -31,7 +31,7 @@ const KEYACTION=16;
 
 const MOVESPEED=3;
 const JUMPSPEED=6; // jump height
-const MAXLIVES=(7*2);
+const MAXLIVES=7;
 
 // Tile ids
 const TILENONE=0;
@@ -342,6 +342,29 @@ function createsprites()
   }
 
   start();
+}
+
+function drawlives()
+{
+  const whole=Math.floor(gs.lives);
+  const empty=Math.floor(MAXLIVES-whole);
+
+  for (var i=0; i<Math.ceil(MAXLIVES); i++)
+  {
+    var px=(i*TILEWIDTH)+gs.xoffset;
+    var py=gs.yoffset;
+
+    if (i<whole)
+      drawspritetile({id:TILEHEART, x:px, y:py, flip:false});
+
+    if (i>=whole)
+    {
+      if ((i==whole) && (whole!=gs.lives))
+        drawspritetile({id:TILEHEARTHALF, x:px, y:py, flip:false});
+      else
+        drawspritetile({id:TILEHEARTEMPTY, x:px, y:py, flip:false});
+    }
+  }
 }
 
 // Check if player has left the map
@@ -714,7 +737,7 @@ function updatemovements()
     {
       for (var id=0; id<gs.chars.length; id++)
       {
-        if (overlap(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2), SPRITEWIDTH*2, SPRITEHEIGHT*2, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
+        if (overlap(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2), SPRITEWIDTH*2, SPRITEHEIGHT*2, gs.chars[id].x, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
         {
           switch (gs.chars[id].id)
           {
@@ -769,7 +792,15 @@ function updateplayerchar()
             if (gs.tiles[id2]-1==TILELOCK)
               gs.tiles[id2]=TILENONE;
           break;
-
+          
+        case TILEHEART:
+          // Remove from map
+          gs.chars[id].del=true;
+          
+          gs.lives++;
+          if (gs.lives>MAXLIVES) gs.lives=MAXLIVES;
+          break;
+          
         case TILECOIN:
         case TILECOIN2:
         case TILEGEM:
@@ -1029,6 +1060,9 @@ function redraw()
     drawsprite(gs.x, gs.y+10, 7);
   else
     drawsprite(gs.x, playerlook(gs.x, gs.y+1)-1==TILEBLOCK?gs.y+4:gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+
+  // Draw hearts left
+  drawlives();
 }
 
 // Load level
