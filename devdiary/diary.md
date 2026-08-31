@@ -92,3 +92,15 @@ Set starting point for main character to they don't always start at top left. Ad
 When water is running from pipes, prevent unicorn from passing. Buttons can be used to turn off the water, but it only stays off until the button pops back up. However if the unicorn is in the water flow path it won't turn back on until the unicorn is clear.
 
 Collecting keys now unlocks all locks, these will be used (like the running water) as a way to add complexity to the player's journey.
+
+31st August
+-----------
+Celebrating a birthday. Added collecting of hearts and display of the 7 hearts (one for each colour of the rainbow).
+
+Spikes now cause damage and make unicorn jump up in pain. Flash when hurt, and temporarily invulnerable.
+
+When moving sprites by fractional amounts they can be drawn incorrectly, so sprite tile drawing routine ensures they are rendered on whole number coordinates.
+
+Added logic for BOB robots, to animate when active, and to wake up when the player is near or sleep when they are far away. They also cause damage when touched. Sort the BOB character to the end so that they are rendered on top of othet chars.
+
+Added logic to determine if current level is complete by counting the number of remaining coins and gems and checking to see if the player is on the rainbow.

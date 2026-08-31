@@ -31,22 +31,22 @@ const KEYACTION=16;
 
 const MOVESPEED=3;
 const JUMPSPEED=6; // jump height
-const MAXLIVES=7;
+const MAXLIVES=7; // One life for each colour of the rainbow
 
 // Tile ids
 const TILENONE=0;
-const TILEUNICORN=4;
-const TILEGEM=5;
+const TILEUNICORN=4; // Starting position
+const TILEGEM=5; // Score 5 points
 const TILELOCK=8; // Unlocked by key
-const TILERAINBOW=24;
+const TILERAINBOW=24; // End of level
 const TILERAINBOW2=25;
-const TILEKEY=28;
-const TILECOIN=29;
-const TILECOIN2=30;
-const TILEHEART=65; // Adds half a heart when collected
+const TILEKEY=28; // Unlock all locks
+const TILECOIN=29; // Collect for points
+const TILECOIN2=30; // Coin spinning variant
+const TILEHEART=65; // Adds a heart when collected
 const TILEHEARTHALF=66;
 const TILEHEARTEMPTY=67;
-const TILESPIKES=68;
+const TILESPIKES=68; // Painful to land on
 const TILEBOB=124;
 const TILEBOB2=125;
 const TILEBOBSLEEP=126;
@@ -54,8 +54,8 @@ const TILEPUMPKIN=127;
 const TILEBLOCKSQUASH=130; // Shown when standing on block
 const TILEBLOCK=131;
 const TILESNOWMAN=132;
-const TILEBUTTON=133; // up
-const TILEBUTTON2=134; // down
+const TILEBUTTON=133; // Up (flowing water on)
+const TILEBUTTON2=134; // Down (flowing water off) - on a timer
 
 const BGCOLOUR="rgb(128,168,209)";
 
@@ -225,7 +225,7 @@ function drawspritetile(sprite)
       ((Math.floor(sprite.y)-gs.yoffset)>YMAX))   // clip bottom
     return;
 
-  drawtile(sprite.id, sprite.x, sprite.y);
+  drawtile(sprite.id, Math.floor(sprite.x), Math.floor(sprite.y));
 }
 
 function drawleg(ctx, x, y, leg, angle)
@@ -632,6 +632,10 @@ function updateanimation()
         case 74: gs.chars[id].id=75; break;
         case 75: gs.chars[id].id=74; break;
 
+        // Bob animation
+        case TILEBOB: gs.chars[id].id=TILEBOB2; break;
+        case TILEBOB2: gs.chars[id].id=TILEBOB; break;
+
         default:
           break;
       }
@@ -827,6 +831,18 @@ function updateplayerchar()
           }
           break;
 
+        // Bob
+        case TILEBOB:
+          if (gs.htime==0)
+          {
+            // Lose health (when not already hurt)
+            if (gs.lives>0)
+              gs.lives-=0.5;
+
+            gs.htime=(TARGETFPS*2);
+          }
+          break;
+
         // Running water
         case 34:
         case 35:
@@ -855,10 +871,89 @@ function updateplayerchar()
   }
 }
 
+// Sort the chars so sprites are last (so they appear in front of non-solid tiles)
+function sortChars(a, b)
+{
+  const sprites=[TILEBOB, TILEBOB2, TILEBOBSLEEP];
+
+  if (a.id!=b.id) // extra processing if they are different ids
+  {
+    var aspr=(sprites.includes(a.id)); // see if a is a sprite
+    var bspr=(sprites.includes(b.id)); // see if b is a sprite
+
+    if (aspr==bspr) return 0; // both sprites, so don't swap
+
+    if (aspr)
+      return 1; // sort a after b
+    else
+      return -1; // sort a before b
+  }
+
+  return 0; // same id
+}
+
+function countchars(tileids)
+{
+  var found=0;
+
+  for (var id=0; id<gs.chars.length; id++)
+    if (tileids.includes(gs.chars[id].id))
+      found++;
+
+  return found;
+}
+
 function updatecharAI()
 {
+  var id=0;
+  var id2=0;
+  var nx=0; // new x position
+  var ny=0; // new y position
+  var ox=0; // old x position
+  var oy=0; // old y position
+
+  for (id=0; id<gs.chars.length; id++)
+  {
+    ox=gs.chars[id].x;
+    oy=gs.chars[id].y;
+
+    switch (gs.chars[id].id)
+    {
+      case TILEBOBSLEEP: // Wake up if player is close by
+        if (calcHypotenuse(Math.abs(gs.x-gs.chars[id].x), Math.abs(gs.y-gs.chars[id].y))<(TILEWIDTH*3))
+        {
+          gs.chars[id].id=TILEBOB;
+          continue;
+        }
+        break;
+
+      case TILEBOB:
+      case TILEBOB2:
+        // Sleep if player far away
+        if (calcHypotenuse(Math.abs(gs.x-gs.chars[id].x), Math.abs(gs.y-gs.chars[id].y))>(TILEWIDTH*10))
+        {
+          gs.chars[id].id=TILEBOBSLEEP;
+          continue;
+        }
+
+        nx=(gs.chars[id].x+=gs.chars[id].hs); // calculate new x position
+        if ((collide(nx, gs.chars[id].y, TILEWIDTH, TILEHEIGHT)) || // blocked by something
+            (
+              (!collide(nx+(gs.chars[id].flip?(TILEWIDTH/2)*-1:(TILEWIDTH)/2), gs.chars[id].y, TILEWIDTH, TILEHEIGHT)) && // not blocked forwards
+              (!collide(nx+(gs.chars[id].flip?(TILEWIDTH/2)*-1:(TILEWIDTH)/2), gs.chars[id].y+(TILEWIDTH/2), TILEWIDTH, TILEHEIGHT)) // not blocked forwards+down (i.e. edge)
+            ))
+          gs.chars[id].hs*=-1; // Turn around
+        else
+          gs.chars[id].x=nx;
+        break;
+
+      default:
+        break;
+    }
+  }
+
   // Remove anything marked for deletion
-  var id=gs.chars.length;
+  id=gs.chars.length;
   while (id--)
   {
     if (gs.chars[id].del)
@@ -992,6 +1087,25 @@ function drawparticles()
 {
   for (var i=0; i<gs.particles.length; i++)
     drawparticle(gs.particles[i]);
+}
+
+// Determine distance (Hypotenuse) between two lengths in 2D space (using Pythagoras)
+function calcHypotenuse(a, b)
+{
+  return(Math.sqrt((a * a) + (b * b)));
+}
+
+// Check for level being completed
+function islevelcompleted()
+{
+  // This is defined as ..
+  //   no coins
+  //   no gems
+  //   standing on rainbow
+
+  return ((countchars([TILECOIN, TILECOIN2, TILEGEM])==0) &&
+          ((playerlook(gs.x, gs.y+1)==TILERAINBOW) ||
+          (playerlook(gs.x, gs.y+1)==TILERAINBOW2)));
 }
 
 // Scroll level to player
@@ -1149,6 +1263,14 @@ function loadlevel(level)
             gs.particles=[];
             break;
 
+          case TILEBOB:
+          case TILEBOB2:
+          case TILEBOBSLEEP:
+            // Assign a random direction
+            obj.hs=(rng()<0.5)?0.5:-0.5;
+            gs.chars.push(obj);
+            break;
+
           default:
             gs.chars.push(obj); // Everything else
             break;
@@ -1156,6 +1278,9 @@ function loadlevel(level)
       }
     }
   }
+
+  // Sort chars such sprites are at the end (so are drawn last, i.e on top)
+  gs.chars.sort(sortChars);
 
   // Move scroll offset to player with damping disabled
   scrolltoplayer(false);
