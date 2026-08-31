@@ -792,20 +792,39 @@ function updateplayerchar()
             if (gs.tiles[id2]-1==TILELOCK)
               gs.tiles[id2]=TILENONE;
           break;
-          
+
         case TILEHEART:
           // Remove from map
           gs.chars[id].del=true;
-          
+
           gs.lives++;
           if (gs.lives>MAXLIVES) gs.lives=MAXLIVES;
           break;
-          
+
         case TILECOIN:
         case TILECOIN2:
         case TILEGEM:
           // Remove from map
           gs.chars[id].del=true;
+          break;
+
+        case TILESPIKES:
+          if (gs.fall)
+          {
+            if (gs.htime==0)
+            {
+              // Lose health (when not already hurt)
+              if (gs.lives>0)
+                gs.lives-=0.5;
+
+              gs.htime=(TARGETFPS*2);
+
+              gs.jump=true;
+              gs.fall=false;
+
+              gs.vs=-(gs.jumpspeed*0.80); // Fly up in the air
+            }
+          }
           break;
 
         // Running water
@@ -1050,16 +1069,19 @@ function redraw()
     generateparticles(gs.x+(SPRITEWIDTH/2), gs.y+(SPRITEHEIGHT/2), 4, 2, RAINBOWCOLS[gs.trail]);
 
   // Draw unicorn sprite
-  if (gs.jump)
-    drawsprite(gs.x, gs.y+1, 7);
-  else
-    if (gs.fall)
-    drawsprite(gs.x, gs.y+1, 8);
-  else
-    if (gs.duck)
-    drawsprite(gs.x, gs.y+10, 7);
-  else
-    drawsprite(gs.x, playerlook(gs.x, gs.y+1)-1==TILEBLOCK?gs.y+4:gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+  if ((gs.htime==0) || ((gs.htime%7)<=4)) // Flash when hurt
+  {
+    if (gs.jump)
+      drawsprite(gs.x, gs.y+1, 7);
+    else
+      if (gs.fall)
+      drawsprite(gs.x, gs.y+1, 8);
+    else
+      if (gs.duck)
+      drawsprite(gs.x, gs.y+10, 7);
+    else
+      drawsprite(gs.x, playerlook(gs.x, gs.y+1)-1==TILEBLOCK?gs.y+4:gs.y+1, gs.hs==0?0:Math.floor(gs.frame/5)+1);
+  }
 
   // Draw hearts left
   drawlives();
