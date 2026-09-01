@@ -1104,8 +1104,8 @@ function islevelcompleted()
   //   standing on rainbow
 
   return ((countchars([TILECOIN, TILECOIN2, TILEGEM])==0) &&
-          ((playerlook(gs.x, gs.y+1)==TILERAINBOW) ||
-          (playerlook(gs.x, gs.y+1)==TILERAINBOW2)));
+          ((playerlook(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2))==TILERAINBOW) ||
+          (playerlook(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2))==TILERAINBOW2)));
 }
 
 // Scroll level to player
@@ -1326,12 +1326,65 @@ function rafcallback(timestamp)
     }
 
     redraw();
+
+    // Check for level failed
+    if ((gs.state==STATEPLAYING) && (gs.lives==0))
+    {
+      gs.xoffset=0;
+      gs.yoffset=0;
+    
+//      gs.state=STATEFAIL;
+      
+      // Reduce issues when inputs held
+      clearinputstate();
+      
+//      gs.timeline.reset().add(10*1000, undefined).addcallback(failgame).begin(0);
+    }
+
+    // Check for level completed
+    if ((gs.state==STATEPLAYING) && (islevelcompleted()))
+    {
+      // Add to score based on how much health is left
+      gs.score+=(10*gs.lives);
+      
+      // Reset scroll offsets
+      gs.xoffset=0;
+      gs.yoffset=0;
+
+      if ((gs.level+1)==levels.length)
+      {
+        // End of game
+//        gs.state=STATECOMPLETE;
+    
+        // Reduce issues when inputs held
+        clearinputstate();
+
+//        gs.timeline.reset().add(10*1000, undefined).addcallback(endgame).begin(0);
+      }
+      else
+        newlevel(gs.level+1);
+    }
+
+    // If the update took us out of play state then stop now
+    if (gs.state!=STATEPLAYING)
+      return;
   }
 
   // Remember when we were last called
   gs.lasttime=timestamp;
 
-  // Request we are called on the next frame
+  // Request we are called on the next frame, but only if still playing
+  if (gs.state==STATEPLAYING)
+    window.requestAnimationFrame(rafcallback);
+}
+
+// New level screen
+function newlevel(level)
+{
+  gs.level=level;
+
+  gs.state=STATEPLAYING;
+  loadlevel(gs.level);
   window.requestAnimationFrame(rafcallback);
 }
 
@@ -1340,8 +1393,7 @@ function start()
 {
   gs.timeline.reset();
 
-  loadlevel(gs.level);
-  window.requestAnimationFrame(rafcallback);
+  newlevel(0);
 }
 
 // Entry point
