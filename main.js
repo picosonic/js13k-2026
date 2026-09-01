@@ -709,7 +709,7 @@ function updatemovements()
   particlecheck();
 
   // When a movement key is pressed, adjust players speed and direction
-  if (gs.keystate!=KEYNONE)
+  if ((gs.keystate!=KEYNONE) || (gs.padstate!=KEYNONE))
   {
     // Left key
     if ((ispressed(KEYLEFT)) && (!ispressed(KEYRIGHT)))
@@ -1308,6 +1308,14 @@ function rafcallback(timestamp)
     // If it's more than 15 seconds since last call, reset
     if ((gs.acc>gs.step) && ((gs.acc/gs.step)>(TARGETFPS*15)))
       gs.acc=gs.step*2;
+
+    // Gamepad support
+    try
+    {
+      if (!!(navigator.getGamepads))
+        gamepadscan();
+    }
+    catch(e){}
 
     // Process "steps" since last call
     while (gs.acc>gs.step)
