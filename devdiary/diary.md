@@ -104,3 +104,7 @@ When moving sprites by fractional amounts they can be drawn incorrectly, so spri
 Added logic for BOB robots, to animate when active, and to wake up when the player is near or sleep when they are far away. They also cause damage when touched. Sort the BOB character to the end so that they are rendered on top of othet chars.
 
 Added logic to determine if current level is complete by counting the number of remaining coins and gems and checking to see if the player is on the rainbow.
+
+1st September
+-------------
+Updates towards a state machine

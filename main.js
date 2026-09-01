@@ -1104,8 +1104,8 @@ function islevelcompleted()
   //   standing on rainbow
 
   return ((countchars([TILECOIN, TILECOIN2, TILEGEM])==0) &&
-          ((playerlook(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2))==TILERAINBOW) ||
-          (playerlook(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2))==TILERAINBOW2)));
+          ((playerlook(gs.x, gs.y)==TILERAINBOW) ||
+          (playerlook(gs.x, gs.y)==TILERAINBOW2)));
 }
 
 // Scroll level to player
