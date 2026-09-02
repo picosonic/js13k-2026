@@ -131,6 +131,7 @@ var gs={
   yoffset:0, // current view offset from top (vertical scroll)
   score:0, // score for the level
   water:0, // How long flowing water should be off for
+  overtherainbow:false, // Is the unicorn over the rainbow
 
   // Input
   keystate:KEYNONE,
@@ -402,11 +403,12 @@ function overlap(ax, ay, aw, ah, bx, by, bw, bh)
   return true;
 }
 
+// Check for collision with tiles
 function collide(px, py, pw, ph)
 {
   // Check for horizontal screen edge collision
   if (px<=(0-(SPRITEWIDTH/5))) return true;
-  if ((px+(SPRITEWIDTH/3))>=(gs.width*SPRITEWIDTH)) return true;
+  if ((px+(SPRITEWIDTH/5))>=(gs.width*TILEWIDTH)) return true;
 
   // Look through all the tiles for a collision
   for (var y=0; y<gs.height; y++)
@@ -775,6 +777,8 @@ function updateplayerchar()
   var pw=(SPRITEWIDTH/3);
   var ph=(SPRITEHEIGHT/5)*3;
 
+  gs.overtherainbow=false;
+
   for (var id=0; id<gs.chars.length; id++)
   {
     // Check for collision with this char
@@ -782,6 +786,11 @@ function updateplayerchar()
     {
       switch (gs.chars[id].id)
       {
+        case TILERAINBOW:
+        case TILERAINBOW2:
+          gs.overtherainbow=true;
+          break;
+
         case TILEKEY:
           gs.key++;
 
@@ -1103,9 +1112,7 @@ function islevelcompleted()
   //   no gems
   //   standing on rainbow
 
-  return ((countchars([TILECOIN, TILECOIN2, TILEGEM])==0) &&
-          ((playerlook(gs.x, gs.y)==TILERAINBOW) ||
-          (playerlook(gs.x, gs.y)==TILERAINBOW2)));
+  return ((countchars([TILECOIN, TILECOIN2, TILEGEM])==0) && (gs.overtherainbow));
 }
 
 // Scroll level to player
