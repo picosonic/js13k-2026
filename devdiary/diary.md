@@ -103,8 +103,18 @@ When moving sprites by fractional amounts they can be drawn incorrectly, so spri
 
 Added logic for BOB robots, to animate when active, and to wake up when the player is near or sleep when they are far away. They also cause damage when touched. Sort the BOB character to the end so that they are rendered on top of othet chars.
 
-Added logic to determine if current level is complete by counting the number of remaining coins and gems and checking to see if the player is on the rainbow.
+Added logic to determine if current level is complete by counting the number of remaining coins and gems and checking to see if the player is on the rainbow. This took longer than anticipated because I was checking for overlapping a rainbow tile - but tiles are solid so you can never overlap them, instead I needed to check for overlapping chars.
 
 1st September
 -------------
-Updates towards a state machine
+Added GamePad support. Updates towards a state machine, whereby the player transitions between the various states. When checking for the level being ended, we don't need to offset the look position to see what chars we are overlapping.
+
+I found that you can go off the RHS of the level, but not the left, this was due to the calculation of the width of the level being a multiple of the sprite width not the tile width.
+
+2nd September
+-------------
+Noticed that bob was able to go off the edge of a platform to the left but not the right. It turned out this was because I wasn't flipping the sprite and so only checking to the right, rather than checking "forwards".
+
+Removed the code that generated the horizontally flipped tilesheet, because it's actually never used.
+
+Added display of score (when above zero). Previously I've added a bitmapped font and rendered it as tiles, but I'm going to try just using canvas text rendering to save space.
