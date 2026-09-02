@@ -356,14 +356,14 @@ function drawlives()
     var py=gs.yoffset;
 
     if (i<whole)
-      drawspritetile({id:TILEHEART, x:px, y:py, flip:false});
+      drawspritetile({id:TILEHEART, x:px, y:py});
 
     if (i>=whole)
     {
       if ((i==whole) && (whole!=gs.lives))
-        drawspritetile({id:TILEHEARTHALF, x:px, y:py, flip:false});
+        drawspritetile({id:TILEHEARTHALF, x:px, y:py});
       else
-        drawspritetile({id:TILEHEARTEMPTY, x:px, y:py, flip:false});
+        drawspritetile({id:TILEHEARTEMPTY, x:px, y:py});
     }
   }
 }
@@ -948,8 +948,8 @@ function updatecharAI()
         nx=(gs.chars[id].x+=gs.chars[id].hs); // calculate new x position
         if ((collide(nx, gs.chars[id].y, TILEWIDTH, TILEHEIGHT)) || // blocked by something
             (
-              (!collide(nx+(gs.chars[id].flip?(TILEWIDTH/2)*-1:(TILEWIDTH)/2), gs.chars[id].y, TILEWIDTH, TILEHEIGHT)) && // not blocked forwards
-              (!collide(nx+(gs.chars[id].flip?(TILEWIDTH/2)*-1:(TILEWIDTH)/2), gs.chars[id].y+(TILEWIDTH/2), TILEWIDTH, TILEHEIGHT)) // not blocked forwards+down (i.e. edge)
+              (!collide(nx+(gs.chars[id].hs<0?(TILEWIDTH/2)*-1:(TILEWIDTH)/2), gs.chars[id].y, TILEWIDTH, TILEHEIGHT)) && // not blocked forwards
+              (!collide(nx+(gs.chars[id].hs<0?(TILEWIDTH/2)*-1:(TILEWIDTH)/2), gs.chars[id].y+(TILEWIDTH/2), TILEWIDTH, TILEHEIGHT)) // not blocked forwards+down (i.e. edge)
             ))
           gs.chars[id].hs*=-1; // Turn around
         else
@@ -1247,7 +1247,7 @@ function loadlevel(level)
 
       if (tile!=0)
       {
-        var obj={id:(tile-1), x:(x*TILEWIDTH), y:(y*TILEHEIGHT), flip:false, hs:0, vs:0, dwell:0, del:false, ttl:0};
+        var obj={id:(tile-1), x:(x*TILEWIDTH), y:(y*TILEHEIGHT), hs:0, vs:0, del:false, ttl:0};
 
         switch (tile-1)
         {
@@ -1446,21 +1446,7 @@ chipt.start(); // TODO
   gs.tilemap=new Image;
   gs.tilemap.onload=function()
   {
-    // Create a flipped version of the tilemap
-    // https://stackoverflow.com/questions/21610321/javascript-horizontally-flip-an-image-object-and-save-it-into-a-new-image-objec
-    var c=document.createElement('canvas');
-    var ctx=c.getContext('2d');
-    c.width=gs.tilemap.width;
-    c.height=gs.tilemap.height;
-    ctx.scale(-1, 1);
-    ctx.drawImage(gs.tilemap, -gs.tilemap.width, 0);
-
-    gs.tilemapflip=new Image;
-    gs.tilemapflip.onload=function()
-    {
-      gs.tilesloaded=true;
-    };
-    gs.tilemapflip.src=c.toDataURL();
+    gs.tilesloaded=true;
   };
   gs.tilemap.src=PNGPREFIX+tilemap;
 
