@@ -368,6 +368,22 @@ function drawlives()
   }
 }
 
+function drawscore()
+{
+  var xpos=(XMAX-((gs.score.toString().length)*6)-8);
+  var ypos=15;
+
+  gs.ctx.font='bold 10px sans-serif';
+  gs.ctx.strokeStyle='black'; // Outline colour
+  gs.ctx.lineWidth=3; // Thickness of outline
+  gs.ctx.lineJoin='round'; // Smooth corners
+
+  gs.ctx.strokeText(gs.score.toString(), xpos, ypos);
+
+  gs.ctx.fillStyle='white';
+  gs.ctx.fillText(gs.score.toString(), xpos, ypos);
+}
+
 // Check if player has left the map
 function offmapcheck()
 {
@@ -1206,6 +1222,10 @@ function redraw()
 
   // Draw hearts left
   drawlives();
+
+  // Draw scrore
+  if (gs.score>0)
+    drawscore();
 }
 
 // Load level
