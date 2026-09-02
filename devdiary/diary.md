@@ -118,3 +118,9 @@ Noticed that bob was able to go off the edge of a platform to the left but not t
 Removed the code that generated the horizontally flipped tilesheet, because it's actually never used.
 
 Added display of score (when above zero). Previously I've added a bitmapped font and rendered it as tiles, but I'm going to try just using canvas text rendering to save space.
+
+Created writing using a rainbow gradient, used on game state transition to give information.
+
+Detect failure to complete game (out of lives) and success completing game (when last level is completed).
+
+I want to add a level select screen with clickable boxes (rainbow tinted).
