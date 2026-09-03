@@ -38,6 +38,7 @@ const TILENONE=0;
 const TILEUNICORN=4; // Starting position
 const TILEGEM=5; // Score 5 points
 const TILELOCK=8; // Unlocked by key
+const TILECOINBLOCK=11; // Hit from below to release coin
 const TILERAINBOW=24; // End of level
 const TILERAINBOW2=25;
 const TILEKEY=28; // Unlock all locks
@@ -122,6 +123,7 @@ var gs={
   trail:0, // trail colour
   lives:MAXLIVES,
   key:0, // number of keys collected
+  lastcollision:{x:0, y:0}, // where collision last occured in tiles[] coordinates
 
   // Level attributes
   level:0, // Level number (0 based)
@@ -436,7 +438,10 @@ function collide(px, py, pw, ph)
       if ((tile-1)!=0)
       {
         if (overlap(px, py, pw, ph, x*TILEWIDTH, y*TILEHEIGHT, TILEWIDTH, TILEHEIGHT))
+        {
+          gs.lastcollision={x:x, y:y};
           return tile;
+        }
       }
     }
   }
@@ -553,6 +558,24 @@ function collisioncheck()
     {
       gs.y+=(gs.vs>0?1:-1);
       loop--;
+    }
+
+    // If it was a coinblock, break it and turn it to a coin
+    if ((gs.jump) && ((playerlook(gs.x, gs.py+gs.vs)-1)==TILECOINBLOCK))
+    {
+      // Remove coinblock
+      gs.tiles[(gs.lastcollision.y*gs.width)+gs.lastcollision.x]=null;
+
+      // Add coin
+      gs.chars.push({id:TILECOIN, x:gs.lastcollision.x*TILEWIDTH, y:gs.lastcollision.y*TILEHEIGHT, hs:0, vs:0, del:false, ttl:0});
+
+      // Move back to where we were
+      gs.x=gs.px;
+      gs.y=gs.py;
+
+      // Prevent rejump
+      clearinputstate();
+      gs.coyote=0;
     }
 
     // Stop vertical movement
@@ -1128,7 +1151,7 @@ function islevelcompleted()
   //   no gems
   //   standing on rainbow
 
-  return ((countchars([TILECOIN, TILECOIN2, TILEGEM])==0) && (gs.overtherainbow));
+  return ((countchars([TILECOIN, TILECOIN2, TILECOINBLOCK, TILEGEM])==0) && (gs.overtherainbow));
 }
 
 // Scroll level to player
@@ -1522,7 +1545,7 @@ function intro(percent)
     gs.score=0;
     gs.lives=MAXLIVES;
 
-    newlevel(3);
+    newlevel(0);
   }
   else
   {
