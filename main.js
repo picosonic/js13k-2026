@@ -59,8 +59,9 @@ const TILESNOWMAN=132;
 const TILEBUTTON=133; // Up (flowing water on)
 const TILEBUTTON2=134; // Down (flowing water off) - on a timer
 
-const BGCOLOUR="rgb(128,168,209)";
+const BGCOLOUR={r:128,g:168,b:209};
 
+const SAVEDATA="rushtotherainbowgame";
 const PNGPREFIX="data:image/png;base64,";
 const CHAROFFS=256;
 
@@ -167,7 +168,10 @@ var gs={
   debug:false,
 
   // True when music has been started (by user interaction)
-  music:false
+  music:false,
+
+  // Save data from localstorage
+  savedata:null
 };
 
 // Random number generator
@@ -1245,7 +1249,7 @@ function redraw()
   scrolltoplayer(false);
 
   // Clear the canvas
-  gs.ctx.fillStyle=BGCOLOUR;
+  gs.ctx.fillStyle='rgb('+BGCOLOUR.r+','+BGCOLOUR.g+','+BGCOLOUR.b+')';
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
 
   // Draw the level
@@ -1433,6 +1437,12 @@ function rafcallback(timestamp)
       // Add to score based on how much health is left
       gs.score+=(10*gs.lives);
 
+      try
+      {
+        window.localStorage.setItem(SAVEDATA, JSON.stringify({nextlevel:gs.level+1, score:gs.score}));
+      }
+      catch (e){}
+
       if ((gs.level+1)==levels.length)
       {
         // End of game
@@ -1616,10 +1626,9 @@ function intro(percent)
   {
     gs.timeline.end();
 
-    gs.score=0;
     gs.lives=MAXLIVES;
 
-    newlevel(0);
+    newlevel(gs.level);
   }
   else
   {
@@ -1630,7 +1639,7 @@ function intro(percent)
       case 0:
         gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
 
-        gs.ctx.fillStyle=BGCOLOUR;
+        gs.ctx.fillStyle='rgb('+BGCOLOUR.r+','+BGCOLOUR.g+','+BGCOLOUR.b+')';
         gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
         break;
 
@@ -1696,6 +1705,31 @@ chipt.start(); // TODO
   window.addEventListener("resize", function() { playfieldsize(); });
 
   playfieldsize();
+
+  // Init level vars which are stored between plays
+  gs.score=0;
+
+  // Restore from localStorage
+  try
+  {
+    var savedata=window.localStorage.getItem(SAVEDATA);
+    if ((savedata!=undefined) && (savedata!=null))
+    {
+      gs.savedata=JSON.parse(savedata);
+
+      // Continue with next level, retaining accumulated score
+      gs.level=gs.savedata.nextlevel;
+      gs.score=gs.savedata.score;
+
+      // If the whole game has been completed go back to the start
+      if ((gs.level)>=levels.length)
+      {
+        gs.level=0;
+        gs.score=0;
+      }
+    }
+  }
+  catch (e) {}
 
   // Set up intro animation callback
   gs.timeline.reset().add(10*1000, undefined).addcallback(intro);
