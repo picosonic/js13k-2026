@@ -128,3 +128,11 @@ I want to add a level select screen with clickable boxes (rainbow tinted).
 3rd September
 -------------
 Added a coin block, that when hit from below breaks to reveal a coin. These are included in the check for the level being complete, so they all need collecting.
+
+Decided on a name for the game - "Rush to the Rainbow". The ultimate target once you've collected everything is to get to the rainbow before the storm comes. I'll add a countdown timer and have the background become darker over time.
+
+Pumpkins can now be collected for 5 points, and gems have been upped to 10 points when collected!
+
+I've started to add a level select screen which draws 7 buttons, on for each level. The idea is you can only play levels you've completed, and your achievments will be recorded in localstorage.
+
+Added breaker blocks, these have exclaimation points on them and can be broken from below by jumping into them, but it takes health to do so.

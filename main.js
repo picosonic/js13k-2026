@@ -38,6 +38,7 @@ const TILENONE=0;
 const TILEUNICORN=4; // Starting position
 const TILEGEM=5; // Score 5 points
 const TILELOCK=8; // Unlocked by key
+const TILEBREAKERBLOCK=10; // Hit from below to break, but it hurts
 const TILECOINBLOCK=11; // Hit from below to release coin
 const TILERAINBOW=24; // End of level
 const TILERAINBOW2=25;
@@ -145,6 +146,9 @@ var gs={
 
   // Tiles
   tiles:[], // copy of current level (to allow destruction)
+
+  // Menu button locations
+  buttons:[],
 
   // Characters
   chars:[],
@@ -560,22 +564,46 @@ function collisioncheck()
       loop--;
     }
 
-    // If it was a coinblock, break it and turn it to a coin
-    if ((gs.jump) && ((playerlook(gs.x, gs.py+gs.vs)-1)==TILECOINBLOCK))
+    // If jumping and hit our head, check what block is was
+    if (gs.jump)
     {
-      // Remove coinblock
-      gs.tiles[(gs.lastcollision.y*gs.width)+gs.lastcollision.x]=null;
+      const headedblock=(playerlook(gs.x, gs.py+gs.vs)-1);
 
-      // Add coin
-      gs.chars.push({id:TILECOIN, x:gs.lastcollision.x*TILEWIDTH, y:gs.lastcollision.y*TILEHEIGHT, hs:0, vs:0, del:false, ttl:0});
+      if ((headedblock==TILECOINBLOCK) || (headedblock==TILEBREAKERBLOCK))
+      {
+        // Remove tile
+        gs.tiles[(gs.lastcollision.y*gs.width)+gs.lastcollision.x]=null;
 
-      // Move back to where we were
-      gs.x=gs.px;
-      gs.y=gs.py;
+        // Move back to where we were
+        gs.x=gs.px;
+        gs.y=gs.py;
 
-      // Prevent rejump
-      clearinputstate();
-      gs.coyote=0;
+        switch (headedblock)
+        {
+          case TILECOINBLOCK:
+            // Add coin
+            gs.chars.push({id:TILECOIN, x:gs.lastcollision.x*TILEWIDTH, y:gs.lastcollision.y*TILEHEIGHT, hs:0, vs:0, del:false, ttl:0});
+            break;
+
+          case TILEBREAKERBLOCK:
+            if (gs.htime==0)
+            {
+              // Lose health (when not already hurt)
+              if (gs.lives>0)
+                gs.lives-=0.5;
+
+              gs.htime=(TARGETFPS*2);
+            }
+            break;
+
+          default:
+            break;
+        }
+
+        // Prevent rejump
+        clearinputstate();
+        gs.coyote=0;
+      }
     }
 
     // Stop vertical movement
@@ -856,6 +884,7 @@ function updateplayerchar()
         case TILECOIN:
         case TILECOIN2:
         case TILEGEM:
+        case TILEPUMPKIN:
           // Remove from map
           gs.chars[id].del=true;
           break;
@@ -1019,6 +1048,10 @@ function updatecharAI()
             break;
 
           case TILEGEM:
+            gs.score+=10;
+            break;
+
+          case TILEPUMPKIN:
             gs.score+=5;
             break;
 
@@ -1451,6 +1484,45 @@ function resettointro()
   gs.timeline.reset().add(10*1000, undefined).addcallback(intro).begin(0);
 }
 
+// Present a level select screen
+function menu()
+{
+  const padding=XMAX/18;
+  const shade=0.7;
+  var lx=padding;
+  var ly=padding*1.4;
+  var lw=(XMAX-(padding*3))/2;
+  var lh=(YMAX-(padding*3))/5;
+
+  for (var level=0; level<RAINBOWCOLS.length; level++)
+  {
+    gs.ctx.fillStyle='rgb('+RAINBOWCOLS[level].r+','+RAINBOWCOLS[level].g+','+RAINBOWCOLS[level].b+')';
+
+    gs.ctx.beginPath();
+    gs.ctx.roundRect(lx, ly, lw, lh, [lw/4, lh/4]);
+    gs.ctx.fill();
+
+    gs.ctx.strokeStyle='rgb('+(RAINBOWCOLS[level].r*shade)+','+(RAINBOWCOLS[level].g*shade)+','+(RAINBOWCOLS[level].b*shade)+')';
+    gs.ctx.lineWidth=3;
+    gs.ctx.beginPath();
+    gs.ctx.roundRect(lx, ly, lw, lh, [lw/4, lh/4]);
+    gs.ctx.stroke();
+
+    // Add a note of where the button is
+    gs.buttons[level]={x:lx, y:ly, w:lw, h:lh};
+
+    lx+=(lw+padding);
+    if (level%2==1)
+    {
+      lx=padding;
+      ly+=(lh+(padding/2));
+    }
+
+    if ((level+2)==RAINBOWCOLS.length)
+      lx+=(lw/2);
+  }
+}
+
 // Fail game animation
 function failgame(percent)
 {
@@ -1531,6 +1603,8 @@ function intro(percent)
   }
   catch(e){}
 
+  menu(); // TODO remove
+
   // Check if done or control key/gamepad pressed
   if (percent>=98)
   {
@@ -1555,21 +1629,17 @@ function intro(percent)
     {
       case 0:
         gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
+
+        gs.ctx.fillStyle=BGCOLOUR;
+        gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
         break;
 
       case 1:
-        rainbowwrite(40, 40, "RUSH TO", 20, 100);
+        rainbowwrite(25, 20, "RUSH TO THE RAINBOW", 20, 100);
         break;
 
-      case 3:
-        rainbowwrite(40, 60, "THE RAINBOW", 20, 100);
-        break;
-
-      case 5:
-        break;
-
-      case 6:
-        rainbowwrite(40, 120, "WASD CURSORS OR GAMEPAD", 15, 100);
+      case 2:
+        rainbowwrite(22, 175, "WASD CURSORS OR GAMEPAD", 15, 100);
         break;
 
       default:
