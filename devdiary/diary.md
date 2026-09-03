@@ -124,3 +124,7 @@ Created writing using a rainbow gradient, used on game state transition to give 
 Detect failure to complete game (out of lives) and success completing game (when last level is completed).
 
 I want to add a level select screen with clickable boxes (rainbow tinted).
+
+3rd September
+-------------
+Added a coin block, that when hit from below breaks to reveal a coin. These are included in the check for the level being complete, so they all need collecting.
