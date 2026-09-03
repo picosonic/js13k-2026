@@ -33,10 +33,6 @@ if (is_array($xml->properties->property) || is_object($xml->properties->property
         $title=(string)$prop->attributes()->value;
         break;
 
-      case "doors":
-        $doors=(string)$prop->attributes()->value;
-        break;
-
       default:
         break;
     }
@@ -78,10 +74,6 @@ $output=array(
   "desc"=>$description,
   "level"=>$leveldata
 );
-
-// Add optional door property (if required)
-if (isset($doors))
-  $output["doors"]=$doors;
 
 // Encode output to JSON
 echo json_encode($output);

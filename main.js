@@ -1,5 +1,5 @@
 // JS 13k 2026 entry
-// Not yet named
+// Rush to the Rainbow
 
 // Global constants
 const XMAX=320;
@@ -1569,7 +1569,7 @@ function intro(percent)
         break;
 
       case 6:
-        rainbowwrite(40, 120, "WASD ZQSD CURSORS OR GAMEPAD", 15, 100);
+        rainbowwrite(40, 120, "WASD CURSORS OR GAMEPAD", 15, 100);
         break;
 
       default:

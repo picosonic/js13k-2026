@@ -1,6 +1,8 @@
 # js13k-2026
 JS13KGames entry for 2026, theme is "**Unicorns and Rainbows**"
 
+## Rush to the Rainbow
+
 # Tools used
 * [Ubuntu OS](https://www.ubuntu.com/)
 * [vim](https://github.com/vim) text editor (also [gedit](https://github.com/GNOME/gedit) a bit)
