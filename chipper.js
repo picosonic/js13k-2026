@@ -1,6 +1,7 @@
 let A, t, n, run=0;
 const bpm=140; // Beats per minute
 
+// Chiptune object
 var chipt={
   pass:0,
   dt:60/bpm/2,
@@ -19,6 +20,7 @@ var chipt={
   bas:["C3","C3","Ab2","Ab2","Eb3","Eb3","Bb2","Bb2",
        "C3","C3","Ab2","Eb5","Eb3","D5","Eb5","Bb2"],
 
+  // Oscillator generator
   osc:function(f, s, d, v, type="square", det=1){
     let o=A.createOscillator(), g=A.createGain();
 
