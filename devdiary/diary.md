@@ -136,3 +136,7 @@ Pumpkins can now be collected for 5 points, and gems have been upped to 10 point
 I've started to add a level select screen which draws 7 buttons, on for each level. The idea is you can only play levels you've completed, and your achievments will be recorded in localstorage.
 
 Added breaker blocks, these have exclaimation points on them and can be broken from below by jumping into them, but it takes health to do so.
+
+The level now gets darker as it approaches the storm. 2 minutes for all levels currently, but I aim to adjust it based on the level complexity, so it'll be a property of each level.
+
+What I'd then like to do is have rain fall once half the storm timer has elapsed, and when it runs out completely I want pieces of the level to collapse.

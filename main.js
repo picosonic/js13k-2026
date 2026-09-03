@@ -136,6 +136,7 @@ var gs={
   score:0, // score for the level
   water:0, // How long flowing water should be off for
   overtherainbow:false, // Is the unicorn over the rainbow
+  stormtimer:0, // Time in seconds before the storm comes
 
   // Input
   keystate:KEYNONE,
@@ -381,7 +382,7 @@ function drawlives()
 function drawscore()
 {
   var xpos=(XMAX-((gs.score.toString().length)*6)-8);
-  var ypos=15;
+  var ypos=12;
 
   gs.ctx.font='bold 10px sans-serif';
   gs.ctx.strokeStyle='black'; // Outline colour
@@ -390,8 +391,25 @@ function drawscore()
 
   gs.ctx.strokeText(gs.score.toString(), xpos, ypos);
 
-  gs.ctx.fillStyle='white';
+  gs.ctx.fillStyle='yellow';
   gs.ctx.fillText(gs.score.toString(), xpos, ypos);
+}
+
+function drawstormtimer()
+{
+  const xpos=Math.floor(XMAX/2);
+  const ypos=12;
+  const stormtimer=Math.floor(gs.stormtimer/TARGETFPS);
+
+  gs.ctx.font='bold 10px sans-serif';
+  gs.ctx.strokeStyle='black'; // Outline colour
+  gs.ctx.lineWidth=3; // Thickness of outline
+  gs.ctx.lineJoin='round'; // Smooth corners
+
+  gs.ctx.strokeText(stormtimer.toString(), xpos, ypos);
+
+  gs.ctx.fillStyle='white';
+  gs.ctx.fillText(stormtimer.toString(), xpos, ypos);
 }
 
 // Check if player has left the map
@@ -803,6 +821,16 @@ function updatemovements()
 
   // Decrease hurt timer
   if (gs.htime>0) gs.htime--;
+
+  // Decrease storm timer
+  if (gs.stormtimer>0)
+  {
+    gs.stormtimer--;
+
+    if (gs.stormtimer==0)
+    {
+    }
+  }
 
   // Decrease water timer
   if (gs.water>0)
@@ -1245,11 +1273,14 @@ function scrolltoplayer(dampened)
 // Redraw game frame
 function redraw()
 {
+  var stormoffset=(gs.stormtimer/(2*60*TARGETFPS));
+  if (stormoffset<0.5) stormoffset=0.5;
+
   // Scroll to keep player in view
   scrolltoplayer(false);
 
   // Clear the canvas
-  gs.ctx.fillStyle='rgb('+BGCOLOUR.r+','+BGCOLOUR.g+','+BGCOLOUR.b+')';
+  gs.ctx.fillStyle='rgb('+(BGCOLOUR.r*stormoffset)+','+(BGCOLOUR.g*stormoffset)+','+(BGCOLOUR.b*stormoffset)+')';
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
 
   // Draw the level
@@ -1286,6 +1317,9 @@ function redraw()
   // Draw scrore
   if (gs.score>0)
     drawscore();
+
+  // Draw storm timer
+  drawstormtimer();
 }
 
 // Load level
@@ -1311,6 +1345,9 @@ function loadlevel(level)
   // Get width/height of new level
   gs.width=parseInt(levels[gs.level].width, 10);
   gs.height=parseInt(levels[gs.level].height, 10);
+
+  // Start with 2 minutes until storm
+  gs.stormtimer=(2*60)*TARGETFPS;
 
   // Start with empty set of characters
   gs.chars=[];
