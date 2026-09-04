@@ -1585,11 +1585,39 @@ function rafcallback(timestamp)
 // New level screen
 function newlevel(level)
 {
-  gs.level=level;
+  if ((level<0) || (level>=levels.length))
+    return;
 
-  gs.state=STATEPLAYING;
-  loadlevel(gs.level);
-  window.requestAnimationFrame(rafcallback);
+  // Ensure timeline is stopped
+  gs.timeline.end().reset();
+  gs.timeline=new timelineobj();
+
+  gs.state=STATENEWLEVEL;
+
+  // Reduce held inputs causing issues
+  clearinputstate();
+
+  // Set up a timeline to display level details
+  gs.timeline.add(0, function()
+  {
+    // Advance to next level
+    gs.level=level;
+
+    // Clear canvas
+    gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
+  
+    // Write level description
+    rainbowwrite(90, 70, "LEVEL "+(gs.level+1).toString(), 30, 100);
+    rainbowwrite((XMAX/2)-((levels[gs.level].desc.length/2)*17), 140, levels[gs.level].desc, 30, 100);
+  }).add(2*1000, function()
+  {
+    gs.state=STATEPLAYING;
+    loadlevel(gs.level);
+
+    window.requestAnimationFrame(rafcallback);
+  });
+
+  gs.timeline.begin()
 }
 
 function rainbowwrite(x, y, text, fontsize, percent)
@@ -1674,7 +1702,7 @@ function failgame(percent)
 
     rainbowwrite(30+((100-percent)/5), 40, "UNLUCKY", 40, percent);
     rainbowwrite(30, 70, "YOUR UNICORN", 30, percent);
-    rainbowwrite(30+((100-percent)/5), 100, "FAILED TO REACH", 30, percent);
+    rainbowwrite(15, 100, "FAILED TO REACH", 30, percent);
     rainbowwrite(30, 130, "THE RAINBOW", 30, percent);
 
     rainbowwrite(30+((100-percent)/5), 160, "YOU SCORED "+gs.score.toString(), 20, percent);
@@ -1706,11 +1734,11 @@ function endgame(percent)
   {
     gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
 
-    rainbowwrite(30+((100-percent)/5), 40, "CONGRATULATIONS", 25, percent);
-    rainbowwrite(30-((100-percent)/5), 70, "YOUR UNICORN GOT", 25, percent);
-    rainbowwrite(30+((100-percent)/5), 100, "ALL THE RAINBOWS", 25, percent);
+    rainbowwrite(30, 40, "CONGRATULATIONS", 25, percent);
+    rainbowwrite(30, 70, "YOUR UNICORN GOT", 25, percent);
+    rainbowwrite(30, 100, "ALL THE RAINBOWS", 25, percent);
 
-    rainbowwrite(30+((100-percent)/5), 160, "YOU SCORED "+gs.score.toString(), 25, percent);
+    rainbowwrite(30, 160, "YOU SCORED "+gs.score.toString(), 25, percent);
   }
 }
 

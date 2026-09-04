@@ -152,3 +152,5 @@ Make the score slightly bigger when it just increased to try to highlight it, as
 Added lightning once the storm timer runs out.
 
 Since there's now quite a lot of particles around, I removed the "just hit the ground" particles and the "shiny" particles when collecting keys.
+
+Added a screen to show between levels, showing level number and description.
