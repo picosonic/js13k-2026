@@ -757,7 +757,10 @@ function generateparticles(cx, cy, mt, count, rgb)
 // Generate rain particles
 function generaterain()
 {
-  for (var i=0; i<(gs.width*gs.height*5); i++)
+  // Clear out any existing rain
+  gs.rain=[];
+
+  for (var i=0; i<(gs.width*gs.height*2); i++)
     gs.rain.push({x:rng()*(gs.width*TILEWIDTH), y:rng()*(gs.height*TILEHEIGHT), r:171, g:190, b:191, a:0.7, s:1});
 }
 
@@ -791,15 +794,21 @@ function particlecheck()
   for (i=0; i<gs.rain.length; i++)
   {
     // Move rain particle
-    gs.rain[i].x-=(gs.gravity*2);
-
-    if (gs.rain[i].x<0)
-      gs.rain[i].x+=(gs.width*TILEWIDTH);
-
     gs.rain[i].y+=(gs.gravity*5);
 
     if (gs.rain[i].y>=gs.height*TILEHEIGHT)
       gs.rain[i].y=0;
+
+    // Randomly "bobble" rain around
+    if (rng()<0.12)
+      continue;
+
+    gs.rain[i].x-=(gs.gravity*2);
+    if (gs.rain[i].x<0)
+      gs.rain[i].x+=(gs.width*TILEWIDTH);
+
+    if (collide(gs.rain[i].x, gs.rain[i].y, 2, 2)!=TILENONE)
+      gs.rain[i].y=rng()*(gs.height*TILEHEIGHT);
   }
 }
 
@@ -852,7 +861,8 @@ function updatemovements()
   {
     gs.stormtimer--;
 
-    if (gs.stormtimer==0)
+    // When half the time has gone, start raining
+    if ((gs.stormtimer<((parseInt(levels[gs.level].storm, 10)*TARGETFPS)/2)) && (gs.rain.length==0))
       generaterain();
   }
 
@@ -1365,7 +1375,8 @@ function redraw()
     drawscore();
 
   // Draw storm timer
-  drawstormtimer();
+  if (gs.stormtimer>0)
+    drawstormtimer();
 }
 
 // Load level
@@ -1392,8 +1403,8 @@ function loadlevel(level)
   gs.width=parseInt(levels[gs.level].width, 10);
   gs.height=parseInt(levels[gs.level].height, 10);
 
-  // Start with 2 minutes until storm
-  gs.stormtimer=(2*60)*TARGETFPS;
+  // Set time until storm
+  gs.stormtimer=parseInt(levels[gs.level].storm, 10)*TARGETFPS;
 
   // Start with empty set of characters
   gs.chars=[];
