@@ -129,14 +129,26 @@ I want to add a level select screen with clickable boxes (rainbow tinted).
 -------------
 Added a coin block, that when hit from below breaks to reveal a coin. These are included in the check for the level being complete, so they all need collecting.
 
-Decided on a name for the game - "Rush to the Rainbow". The ultimate target once you've collected everything is to get to the rainbow before the storm comes. I'll add a countdown timer and have the background become darker over time.
+Decided on a name for the game - "Rush to the Rainbow". The ultimate target once you've collected everything is to get to the rainbow before the storm comes. I've add a countdown timer for the coming of the storm.
 
 Pumpkins can now be collected for 5 points, and gems have been upped to 10 points when collected!
 
-I've started to add a level select screen which draws 7 buttons, on for each level. The idea is you can only play levels you've completed, and your achievments will be recorded in localstorage.
+I've started to add a level select screen which draws 7 buttons, one for each level. The idea is you can only skip levels you've completed, and your achievments are recorded in localstorage.
 
 Added breaker blocks, these have exclaimation points on them and can be broken from below by jumping into them, but it takes health to do so.
 
-The level now gets darker as it approaches the storm. 2 minutes for all levels currently, but I aim to adjust it based on the level complexity, so it'll be a property of each level.
+The level now gets darker as it approaches the storm down to 50% when the rain starts. I'm using a default of 2 minutes for all levels currently, but I aim to adjust it based on the level complexity, so it'll be a property of each level.
 
-What I'd then like to do is have rain fall once half the storm timer has elapsed, and when it runs out completely I want pieces of the level to collapse.
+What I'd then like to do is when the storm timer has elapsed completely have pieces of the level collapse.
+
+4th September
+-------------
+Added support for varying the storm timer on a per level basis.
+
+The rain looked a bit too uniform, so I've made it bobble around a little and be affected by the tiles of the level. Incase this creates too much CPU load, I've reduced the amount of rain particles generated.
+
+Make the score slightly bigger when it just increased to try to highlight it, as most of the time it's pretty small.
+
+Added lightning once the storm timer runs out.
+
+Since there's now quite a lot of particles around, I removed the "just hit the ground" particles and the "shiny" particles when collecting keys.

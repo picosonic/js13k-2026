@@ -137,6 +137,7 @@ var gs={
   water:0, // How long flowing water should be off for
   overtherainbow:false, // Is the unicorn over the rainbow
   stormtimer:0, // Time in seconds before the storm comes
+  scoretime:0, // Time to show larger score for
 
   // Input
   keystate:KEYNONE,
@@ -386,6 +387,15 @@ function drawscore()
   var ypos=12;
 
   gs.ctx.font='bold 10px sans-serif';
+
+  // Make score bigger when it just increased
+  if (gs.scoretime>0)
+  {
+    gs.ctx.font='bold 15px sans-serif';
+    xpos-=12;
+    ypos+=5;
+  }
+
   gs.ctx.strokeStyle='black'; // Outline colour
   gs.ctx.lineWidth=3; // Thickness of outline
   gs.ctx.lineJoin='round'; // Smooth corners
@@ -498,14 +508,10 @@ function groundcheck()
   // Check if we are on the ground
   if (playercollide(gs.x, gs.y+1))
   {
-    // If we just hit the ground after falling, create a few particles under foot
-    if (gs.fall==true)
-      generateparticles(gs.x+(SPRITEWIDTH/2), gs.y+SPRITEHEIGHT, 4, 4, {r:170, g:170, b:170});
-
     gs.vs=0;
     gs.jump=false;
     gs.fall=false;
-    gs.coyote=15;
+    gs.coyote=TARGETFPS/4; // Quarter of a second
     var tilebelow=playerlook(gs.x, gs.y+1)-1;
 
     // Check for jump pressed, when not ducking
@@ -750,7 +756,7 @@ function generateparticles(cx, cy, mt, count, rgb)
     var g=rgb.g*(rng()*255);
     var b=rgb.b*(rng()*255);
 
-    gs.particles.push({x:cx, y:cy, ang:ang, t:t, r:r, g:g, b:b, a:1.0, s:(rng()<0.05)?2:1});
+    gs.particles.push({x:cx, y:cy, ang:ang, t:t, r:r, g:g, b:b, a:0.5, s:(rng()<0.05)?3:1});
   }
 }
 
@@ -856,6 +862,9 @@ function updatemovements()
   // Decrease hurt timer
   if (gs.htime>0) gs.htime--;
 
+  // Decrease score timer
+  if (gs.scoretime>0) gs.scoretime--;
+
   // Decrease storm timer
   if (gs.stormtimer>0)
   {
@@ -926,9 +935,6 @@ function updateplayerchar()
 
         case TILEKEY:
           gs.key++;
-
-          // Shiny
-          generateparticles(gs.chars[id].x+(TILEWIDTH/2), gs.chars[id].y+(TILEHEIGHT/2), 16, 16, {r:0xff, g:0xff, b:1});
 
           // Remove from map
           gs.chars[id].del=true;
@@ -1012,6 +1018,14 @@ function updateplayerchar()
       }
     }
   }
+}
+
+// Add to score, and make it show bigger for a while
+function addtoscore(points)
+{
+  gs.score+=points;
+
+  gs.scoretime=TARGETFPS;
 }
 
 // Sort the chars so sprites are last (so they appear in front of non-solid tiles)
@@ -1110,15 +1124,15 @@ function updatecharAI()
         {
           case TILECOIN:
           case TILECOIN2:
-            gs.score++;
+            addtoscore(1);
             break;
 
           case TILEGEM:
-            gs.score+=10;
+            addtoscore(10);
             break;
 
           case TILEPUMPKIN:
-            gs.score+=5;
+            addtoscore(5);
             break;
 
           default:
@@ -1336,7 +1350,10 @@ function redraw()
   scrolltoplayer(false);
 
   // Clear the canvas
-  gs.ctx.fillStyle='rgb('+(BGCOLOUR.r*stormoffset)+','+(BGCOLOUR.g*stormoffset)+','+(BGCOLOUR.b*stormoffset)+')';
+  if ((gs.stormtimer==0) && (rng()<0.005))
+    gs.ctx.fillStyle='rgb(253, 224, 71)'; // Lightning
+  else
+    gs.ctx.fillStyle='rgb('+(BGCOLOUR.r*stormoffset)+','+(BGCOLOUR.g*stormoffset)+','+(BGCOLOUR.b*stormoffset)+')';
   gs.ctx.fillRect(0, 0, gs.canvas.width, gs.canvas.height);
 
   // Draw the level
