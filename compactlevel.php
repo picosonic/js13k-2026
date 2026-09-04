@@ -16,7 +16,7 @@ $width=intval((string)$xml->attributes()['width']);
 $height=intval((string)$xml->attributes()['height']);
 
 $description="";
-$title="";
+$storm=120;
 
 // Process level properties
 if (is_array($xml->properties->property) || is_object($xml->properties->property))
@@ -29,8 +29,8 @@ if (is_array($xml->properties->property) || is_object($xml->properties->property
         $description=(string)$prop->attributes()->value;
         break;
 
-      case "title":
-        $title=(string)$prop->attributes()->value;
+      case "storm":
+        $storm=intval((string)$prop->attributes()->value);
         break;
 
       default:
@@ -70,7 +70,7 @@ foreach ($xml->layer as $layer)
 $output=array(
   "width"=>$width,
   "height"=>$height,
-  "title"=>$title,
+  "storm"=>$storm,
   "desc"=>$description,
   "level"=>$leveldata
 );
