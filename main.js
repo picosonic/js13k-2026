@@ -158,6 +158,7 @@ var gs={
 
   // Particles
   particles:[], // an array of particles
+  rain:[], // an array of rain particles
 
   // Game state
   state:STATEINTRO, // state machine
@@ -753,6 +754,13 @@ function generateparticles(cx, cy, mt, count, rgb)
   }
 }
 
+// Generate rain particles
+function generaterain()
+{
+  for (var i=0; i<(gs.width*gs.height*5); i++)
+    gs.rain.push({x:rng()*(gs.width*TILEWIDTH), y:rng()*(gs.height*TILEHEIGHT), r:171, g:190, b:191, a:0.7, s:1});
+}
+
 // Do processing for particles
 function particlecheck()
 {
@@ -775,6 +783,23 @@ function particlecheck()
   {
     if (gs.particles[i].a<=0)
       gs.particles.splice(i, 1);
+  }
+
+  ////////////////////////////
+
+  // Process rain particles
+  for (i=0; i<gs.rain.length; i++)
+  {
+    // Move rain particle
+    gs.rain[i].x-=(gs.gravity*2);
+
+    if (gs.rain[i].x<0)
+      gs.rain[i].x+=(gs.width*TILEWIDTH);
+
+    gs.rain[i].y+=(gs.gravity*5);
+
+    if (gs.rain[i].y>=gs.height*TILEHEIGHT)
+      gs.rain[i].y=0;
   }
 }
 
@@ -828,8 +853,7 @@ function updatemovements()
     gs.stormtimer--;
 
     if (gs.stormtimer==0)
-    {
-    }
+      generaterain();
   }
 
   // Decrease water timer
@@ -1195,11 +1219,33 @@ function drawparticle(particle)
   gs.ctx.fillRect(Math.floor(x)-gs.xoffset, Math.floor(y)-gs.yoffset, particle.s, particle.s);
 }
 
+// Draw a single rain particle
+function drawrain(raindrop)
+{
+  var x=raindrop.x;
+  var y=raindrop.y;
+
+  // Clip to what's visible
+    if (((Math.floor(x)-gs.xoffset)<0) && // clip left
+    ((Math.floor(x)-gs.xoffset)>XMAX) && // clip right
+    ((Math.floor(y)-gs.yoffset)<0) && // clip top
+    ((Math.floor(y)-gs.yoffset)>YMAX))   // clip bottom
+  return;
+
+  gs.ctx.fillStyle="rgba("+raindrop.r+","+raindrop.g+","+raindrop.b+","+raindrop.a+")";
+  gs.ctx.fillRect(Math.floor(x)-gs.xoffset, Math.floor(y)-gs.yoffset, raindrop.s, raindrop.s);
+}
+
 // Draw particles
 function drawparticles()
 {
-  for (var i=0; i<gs.particles.length; i++)
+  var i;
+
+  for (i=0; i<gs.particles.length; i++)
     drawparticle(gs.particles[i]);
+
+  for (i=0; i<gs.rain.length; i++)
+    drawrain(gs.rain[i]);
 }
 
 // Determine distance (Hypotenuse) between two lengths in 2D space (using Pythagoras)
@@ -1385,6 +1431,7 @@ function loadlevel(level)
             gs.dir=0;
             gs.flip=false;
             gs.particles=[];
+            gs.rain=[];
             break;
 
           case TILEBOB:
