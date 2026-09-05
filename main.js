@@ -15,7 +15,6 @@ const TILESPERROW=20;
 const SPRITEWIDTH=35;
 const SPRITEHEIGHT=34;
 
-const STATEINTRO=0;
 const STATEMENU=1;
 const STATEPLAYING=2;
 const STATENEWLEVEL=3;
@@ -162,13 +161,16 @@ var gs={
   rain:[], // an array of rain particles
 
   // Game state
-  state:STATEINTRO, // state machine
+  state:STATEMENU, // state machine
 
   // Timeline for animation
   timeline:new timelineobj(), // timeline for general animation
 
   // Debug flag
   debug:false,
+
+  // Quit flag to go back to menu
+  quit:false,
 
   // True when music has been started (by user interaction)
   music:false,
@@ -1577,6 +1579,16 @@ function rafcallback(timestamp)
   // Remember when we were last called
   gs.lasttime=timestamp;
 
+  // Check for quit to menu
+  if (gs.quit)
+  {
+    gs.quit=false;
+
+    gs.state=STATEMENU;
+    gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
+    setTimeout(resettomenu, 300);
+  }
+
   // Request we are called on the next frame, but only if still playing
   if (gs.state==STATEPLAYING)
     window.requestAnimationFrame(rafcallback);
@@ -1629,13 +1641,13 @@ function rainbowwrite(x, y, text, fontsize, percent)
   gs.ctx.fillText(text, x, y+(Math.sin(percent)*3));
 }
 
-function resettointro()
+function resettomenu()
 {
-  gs.timeline.reset().add(10*1000, undefined).addcallback(intro).begin(0);
+  gs.timeline.reset().add(10*1000, undefined).addcallback(menu).begin(0);
 }
 
 // Present a level select screen
-function menu()
+function drawmenu()
 {
   const padding=XMAX/18;
   const shade=0.7;
@@ -1692,9 +1704,9 @@ function failgame(percent)
   {
     gs.level=0; // Player failed - back to the start
 
-    gs.state=STATEINTRO;
+    gs.state=STATEMENU;
     gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
-    setTimeout(resettointro, 300);
+    setTimeout(resettomenu, 300);
   }
   else
   {
@@ -1726,9 +1738,9 @@ function endgame(percent)
   // Check if done or control key/gamepad pressed
   if ((percent>=98) || (((gs.keystate!=KEYNONE) || (gs.padstate!=KEYNONE)) && (percent>=20)))
   {
-    gs.state=STATEINTRO;
+    gs.state=STATEMENU;
     gs.ctx.clearRect(0, 0, gs.canvas.width, gs.canvas.height);
-    setTimeout(resettointro, 300);
+    setTimeout(resettomenu, 300);
   }
   else
   {
@@ -1742,8 +1754,8 @@ function endgame(percent)
   }
 }
 
-// Intro animation
-function intro(percent)
+// Main menu
+function menu(percent)
 {
   // Gamepad support
   try
@@ -1753,13 +1765,13 @@ function intro(percent)
   }
   catch(e){}
 
-  menu(); // TODO remove
+  drawmenu(); // TODO remove
 
   // Check if done or control key/gamepad pressed
   if (percent>=98)
   {
     gs.timeline.end();
-    setTimeout(resettointro, 3*1000);
+    setTimeout(resettomenu, 3*1000);
   }
   else
   if (((gs.keystate!=KEYNONE) || (gs.padstate!=KEYNONE)) && (percent>20))
@@ -1871,8 +1883,8 @@ chipt.start(); // TODO
   }
   catch (e) {}
 
-  // Set up intro animation callback
-  gs.timeline.reset().add(10*1000, undefined).addcallback(intro);
+  // Set up menu animation callback
+  gs.timeline.reset().add(10*1000, undefined).addcallback(menu);
 
   // Once tilemap has loaded, create flipped one
   gs.tilemap=new Image;
