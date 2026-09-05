@@ -6,7 +6,7 @@ Controls
 
 | Action      | Keys           |
 | ----------- | -------------- |
-| Movement    | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd>  / Gamepad         |
+| Movement    | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <br><br> <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd>  <br><br> 🎮 Gamepad         |
 | Back to menu   | <kbd>Esc</kbd>            |
 
 Goal
