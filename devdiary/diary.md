@@ -154,3 +154,11 @@ Added lightning once the storm timer runs out.
 Since there's now quite a lot of particles around, I removed the "just hit the ground" particles and the "shiny" particles when collecting keys.
 
 Added a screen to show between levels, showing level number and description.
+
+Made some notes of what I still want to do before submitting the game.
+
+5th September
+-------------
+Spent some time updating the description text for the game which will show on the game select page of JS13k website. Simplifying text, adding background and goal, emoji, tile descriptions e.t.c.
+
+Added functionality so that when Escape is pressed it exits the game and goes back to the menu.
