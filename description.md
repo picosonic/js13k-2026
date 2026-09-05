@@ -11,22 +11,24 @@ Controls
 
 Goal
 ----
-You play as a unicorn, but your rainbow trail is fading. You need to gather coins and gems to put into the pot at the end of each rainbow.
+🦄 You play as a unicorn, but your rainbow trail is fading. You need to gather **all** the golden coins then rush to  put them back into the pot at the end of each rainbow.
 
-But you'll need to be quick because the timer at the top shows how long you've got until the storm comes, as it approaches it gets dartker. When half your time has gone it'll start raining, then once the storm has arrived you'll see lightning.
+⏲️ But you'll need to be quick because the timer at the top shows how long you've got until the storm comes. As it approaches the sky gets darker.
 
-You need to collect all the coins and gems, then rush to the rainbow to finish the levels.
+🌧️ When half your time has gone it'll start raining, then once the storm has arrived you'll see lightning which slowly destroys the level.
 
-Lock blocks will need a key to unlock.
+Tiles
+-----
 
-Circle blocks contain a coin - smash them from below. You need all the coins to complete the levels.
-
-Exclaimation blocks can be broken from underneath to get to otherwise unreachable part of the level.
-
-You can't get past a stream of flowing water, so you'll need to find a blue button nearby to turn the tap off, but if you let go of the button the water will restart after a short time.
-
-Spikes hurt when you fall onto them. Sometimes they block routes through the levels so don't be afraid to go past them.
-
-B.O.B. bots sleep soundly until you get too close, then they wake up and scurry around until you're far enough away that you're no longer disturbing them. Be careful as they hurt you and can't be destroyed.
-
-You have 7 hearts - one for each colour of the rainbow, you lose them if you get hurt, but if you collect hearts you can restore your health. Any hearts remaining are added to your score at the end of each level completed.
+| Tile | Purpose |
+| ---- | ------- |
+| ![Heart](https://github.com/picosonic/js13k-2026/blob/main/assets/heart.png?raw=true "Heart")    |  7 hearts - one for each rainbow colour, collect them to restore a bit of your health      |
+| ![Coin](https://github.com/picosonic/js13k-2026/blob/main/assets/coin.png?raw=true "Coin")    |  Collect all the coins to drop at the rainbow      |
+| ![Coin Block](https://github.com/picosonic/js13k-2026/blob/main/assets/coinblock.png?raw=true "Coin block")    |  Smash coin blocks from below to get at their coins      |
+| ![Gem](https://github.com/picosonic/js13k-2026/blob/main/assets/gem.png?raw=true "Gem")    |  Collect gems for a higher score      |
+| ![Lock](https://github.com/picosonic/js13k-2026/blob/main/assets/lock.png?raw=true "Lock")    |  Locks can block your path and are opened with keys       |
+| ![Key](https://github.com/picosonic/js13k-2026/blob/main/assets/key.png?raw=true "Key")    |  Collect a key to open all the locks       |
+| ![Button](https://github.com/picosonic/js13k-2026/blob/main/assets/button.png?raw=true "Button")    |  Pressing a button will stop flowing water temporarily - allowing you to pass      |
+| ![Breaker block](https://github.com/picosonic/js13k-2026/blob/main/assets/breaker.png?raw=true "Breaker block")    |  Breaker blocks can be smashed from below to clear a path, but will hurt       |
+| ![Spike](https://github.com/picosonic/js13k-2026/blob/main/assets/spike.png?raw=true "Spike")    |  Landing on spikes from above hurts      |
+| ![Bob](https://github.com/picosonic/js13k-2026/blob/main/assets/bob.png?raw=true "BOB")    |  B.O.B. bots sleep until disturbed, then scurry around until you leave them alone - they hurt       |
