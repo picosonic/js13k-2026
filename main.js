@@ -1795,9 +1795,10 @@ function menurafcallback(timestamp)
   gs.frame++;
 
   rainbowwrite(25, 20, "RUSH TO THE RAINBOW", 20);
-  rainbowwrite(22, 175, "WASD CURSORS OR GAMEPAD", 15);
   if ((!gs.music) && ((gs.frame%TARGETFPS)>(TARGETFPS/2)))
-    rainbowwrite(255, 174, "[ENTER]", 15);
+    rainbowwrite(240, 174, "[ENTER]", 15);
+  else
+    rainbowwrite(22, 175, "WASD CURSORS OR GAMEPAD", 15);
 
   // Check for arrow navigation
   if ((ispressed(KEYLEFT)) && (gs.padstate==KEYNONE))
@@ -1901,37 +1902,30 @@ function newlevel(level)
   infogame(1.5*TARGETFPS);
 }
 
+// Attempt to start music from user interaction
+function gomusic()
+{
+  if (!gs.music)
+  {
+    gs.music=true;
+    chipt.start();
+  }
+}
+
 // Entry point
 function init()
 {
   // Initialise stuff
-  document.onkeydown=function(e)
-  {
-    updatekeystate(e, 1);
-
-    if ((!gs.music) && ((e.code=='Enter') || (e.code=='Space')))
-    {
-      gs.music=true;
-      chipt.start();
-    }
-  };
-
-  document.onkeyup=function(e)
-  {
-    updatekeystate(e, 0);
-  };
+  window.addEventListener("keydown", (e) => { updatekeystate(e, 1); gomusic(); });
+  window.addEventListener("keyup", (e) => { updatekeystate(e, 0); });
 
   // Stop things from being dragged around
-  window.ondragstart=function(e)
-  {
-    e.preventDefault();
-  };
+  window.addEventListener("dragstart", (e) => { e.preventDefault(); });
 
-  // Ignore mouse
-  window.onmousedown=function(e)
-  {
-    e.preventDefault();
-  };
+  // Ignore mouse, but use interaction gesture to start audio
+  window.addEventListener("mousedown", (e) => { gomusic(); e.preventDefault(); });
+  window.addEventListener("click", (e) => { gomusic(); e.preventDefault(); });
+  window.addEventListener("touchstart", (e) => { gomusic(); e.preventDefault(); });
 
   // Set up canvas
   gs.canvas=document.getElementById("canvas");
@@ -1948,7 +1942,7 @@ function init()
   gs.rainbowgradient.addColorStop(5/6, 'blue');
   gs.rainbowgradient.addColorStop(1.00, 'purple');
 
-  window.addEventListener("resize", function() { playfieldsize(); });
+  window.addEventListener("resize", () => { playfieldsize(); });
 
   playfieldsize();
 
