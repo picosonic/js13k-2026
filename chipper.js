@@ -78,6 +78,9 @@ var chipt={
 
     if (!A) A=new AudioContext;
 
+    if (A.state==='suspended')
+      A.resume();
+
     run=1;
     t=A.currentTime+.05; // Timestamp for next note
 
