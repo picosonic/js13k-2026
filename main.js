@@ -81,6 +81,9 @@ var gs={
   acc:0, // accumulated time since last frame
   lasttime:0, // time of last frame
 
+  fps:0, // current FPS
+  frametimes:[], // array of frame times
+
   // physics in pixels per frame @ 60fps
   gravity:0.25,
   terminalvelocity:10,
@@ -159,6 +162,9 @@ var gs={
 
   // Game state
   state:STATEMENU, // state machine
+
+  // Debug flag
+  debug:false,
 
   // Quit flag to go back to menu
   quit:false,
@@ -819,6 +825,13 @@ function particlecheck()
     if (gs.rain[i].x<0)
       gs.rain[i].x+=(gs.width*TILEWIDTH);
 
+    // If raindrop is offscreen - don't process collisions
+    if (((gs.rain[i].x-gs.xoffset)<0) && // clip left
+        ((gs.rain[i].x-gs.xoffset)>XMAX) && // clip right
+        ((gs.rain[i].y-gs.yoffset)<0) && // clip top
+        ((gs.rain[i].y-gs.yoffset)>YMAX))   // clip bottom
+      continue;
+
     if (collide(gs.rain[i].x, gs.rain[i].y, 2, 2)!=TILENONE)
       gs.rain[i].y=rng()*(gs.height*TILEHEIGHT);
   }
@@ -1457,6 +1470,9 @@ function redraw()
   // Draw storm timer
   if (gs.stormtimer>0)
     drawstormtimer();
+
+  if (gs.debug)
+    document.title=""+gs.fps+" fps";
 }
 
 // Load level
@@ -1651,6 +1667,16 @@ function infogame10()
 // Request animation frame callback
 function rafcallback(timestamp)
 {
+  if (gs.debug)
+  {
+    // Calculate FPS
+    while ((gs.frametimes.length>0) && (gs.frametimes[0]<=(timestamp-1000)))
+      gs.frametimes.shift(); // Remove all entries older than a second
+
+    gs.frametimes.push(timestamp); // Add current time
+    gs.fps=gs.frametimes.length; // FPS = length of times in array
+  }
+
   // First time round, just save epoch
   if (gs.lasttime>0)
   {
