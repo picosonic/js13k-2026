@@ -216,9 +216,9 @@ function drawtile(tileid, x, y)
   if (tileid==0) return;
 
   // Clip to what's visible
-  if (((x-gs.xoffset)<-TILEWIDTH) && // clip left
-      ((x-gs.xoffset)>XMAX) && // clip right
-      ((y-gs.yoffset)<-TILEHEIGHT) && // clip top
+  if (((x-gs.xoffset)<-TILEWIDTH) || // clip left
+      ((x-gs.xoffset)>XMAX) || // clip right
+      ((y-gs.yoffset)<-TILEHEIGHT) || // clip top
       ((y-gs.yoffset)>YMAX))   // clip bottom
     return;
 
@@ -232,9 +232,9 @@ function drawspritetile(sprite)
   if (sprite.id==0) return;
 
   // Clip to what's visible
-  if (((Math.floor(sprite.x)-gs.xoffset)<-TILEWIDTH) && // clip left
-      ((Math.floor(sprite.x)-gs.xoffset)>XMAX) && // clip right
-      ((Math.floor(sprite.y)-gs.yoffset)<-TILEHEIGHT) && // clip top
+  if (((Math.floor(sprite.x)-gs.xoffset)<-TILEWIDTH) || // clip left
+      ((Math.floor(sprite.x)-gs.xoffset)>XMAX) || // clip right
+      ((Math.floor(sprite.y)-gs.yoffset)<-TILEHEIGHT) || // clip top
       ((Math.floor(sprite.y)-gs.yoffset)>YMAX))   // clip bottom
     return;
 
@@ -1103,7 +1103,7 @@ function counttiles(tileids)
   var found=0;
 
   for (var id=0; id<gs.tiles.length; id++)
-    if (tileids.includes(gs.tiles[id]))
+    if (tileids.includes(gs.tiles[id]-1))
       found++;
 
   return found;
