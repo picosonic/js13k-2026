@@ -51,13 +51,19 @@ As [my entry last year](https://js13kgames.com/2025/games/mochi-and-the-midnight
 -----------
 After playing around with various looping melodies, I decided on making slight adjustments to the various aspects of the track so that although it's quite repetitive, it doesn't sound too repetitive due to adjustments. Made a start on main character sprite.
 
+![Sprite sheet](../assets/spritesheet.png?raw=true "Sprite sheet")
+
 24th August
 -----------
 Added [animation frame callback](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) mechanism which will form the core of [game loop](https://en.wikipedia.org/wiki/Video_game_programming#Game_structure). Added beginnings of platformer physics, included a box which can be controlled to move around and jump.
 
+![Platformer physics](aug24.gif?raw=true "Platformer physics")
+
 25th August
 -----------
 Worked on unicorn character. Separated front and rear legs, developed walk animation by drawing all components of unicorn from spritesheet and rotating legs as required using anchor points on the body and leg sections.
+
+![Sprite poses](sprite_poses.png?raw=true "Sprite poses")
 
 26th August
 -----------
