@@ -1098,6 +1098,17 @@ function countchars(tileids)
   return found;
 }
 
+function counttiles(tileids)
+{
+  var found=0;
+
+  for (var id=0; id<gs.tiles.length; id++)
+    if (tileids.includes(gs.tiles[id]))
+      found++;
+
+  return found;
+}
+
 function updatecharAI()
 {
   var id=0;
@@ -1330,7 +1341,7 @@ function islevelcompleted()
   //   no coins
   //   standing on rainbow
 
-  return ((countchars([TILECOIN, TILECOIN2, TILECOINBLOCK])==0) && (gs.overtherainbow));
+  return ((countchars([TILECOIN, TILECOIN2])==0) && (counttiles([TILECOINBLOCK])==0) && (gs.overtherainbow));
 }
 
 // Scroll level to player
