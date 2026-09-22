@@ -224,3 +224,13 @@ Refactored code to remove need for timeline library, since I'm not really doing 
 Level select menu is now keyboard only. When music hasn't been started yet, flash instruction to press ENTER at bottom right.
 
 Due to massive space saving by taking out timeline and other golfing, decided to expanded levels until we reach the golden 13k!
+
+Code distribution
+-----------------
+
+![Make up](makeup.png?raw=true "Make up")
+
+- Yellow = HTML/CSS
+- Green = Levels
+- Orange = JavaScript
+- Blue = PNG images
