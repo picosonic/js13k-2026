@@ -1678,15 +1678,12 @@ function infogame10()
 // Request animation frame callback
 function rafcallback(timestamp)
 {
-  if (gs.debug)
-  {
-    // Calculate FPS
-    while ((gs.frametimes.length>0) && (gs.frametimes[0]<=(timestamp-1000)))
-      gs.frametimes.shift(); // Remove all entries older than a second
+  // Calculate FPS
+  while ((gs.frametimes.length>0) && (gs.frametimes[0]<=(timestamp-1000)))
+    gs.frametimes.shift(); // Remove all entries older than a second
 
-    gs.frametimes.push(timestamp); // Add current time
-    gs.fps=gs.frametimes.length; // FPS = length of times in array
-  }
+  gs.frametimes.push(timestamp); // Add current time
+  gs.fps=gs.frametimes.length; // FPS = length of times in array
 
   // First time round, just save epoch
   if (gs.lasttime>0)
