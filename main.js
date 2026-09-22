@@ -775,10 +775,10 @@ function generateparticles(cx, cy, mt, count, rgb)
 // Generate rain particles
 function generaterain()
 {
-  // Clear out any existing rain
-  gs.rain=[];
+  // Generate an appropriate amount of rain based on the level size and FPS
+  var raincount=(gs.fps>(TARGETFPS/2))?(gs.width*gs.height*2):(Math.floor((gs.width*gs.height)/2));
 
-  for (var i=0; i<(gs.width*gs.height*2); i++)
+  for (var i=0; i<raincount; i++)
     gs.rain.push({x:rng()*(gs.width*TILEWIDTH), y:rng()*(gs.height*TILEHEIGHT), r:171, g:190, b:191, a:0.7, s:1});
 }
 
@@ -818,7 +818,7 @@ function particlecheck()
       gs.rain[i].y=0;
 
     // Randomly "bobble" rain around
-    if (rng()<0.12)
+    if ((gs.fps>(TARGETFPS/2)) && (rng()<0.12))
       continue;
 
     gs.rain[i].x-=(gs.gravity*2);
@@ -832,7 +832,7 @@ function particlecheck()
         ((gs.rain[i].y-gs.yoffset)>YMAX))   // clip bottom
       continue;
 
-    if (collide(gs.rain[i].x, gs.rain[i].y, 2, 2)!=TILENONE)
+    if ((gs.fps>(TARGETFPS/2)) && (collide(gs.rain[i].x, gs.rain[i].y, 2, 2)!=TILENONE))
       gs.rain[i].y=rng()*(gs.height*TILEHEIGHT);
   }
 }
