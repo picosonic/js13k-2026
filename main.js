@@ -826,9 +826,9 @@ function particlecheck()
       gs.rain[i].x+=(gs.width*TILEWIDTH);
 
     // If raindrop is offscreen - don't process collisions
-    if (((gs.rain[i].x-gs.xoffset)<0) && // clip left
-        ((gs.rain[i].x-gs.xoffset)>XMAX) && // clip right
-        ((gs.rain[i].y-gs.yoffset)<0) && // clip top
+    if (((gs.rain[i].x-gs.xoffset)<0) || // clip left
+        ((gs.rain[i].x-gs.xoffset)>XMAX) || // clip right
+        ((gs.rain[i].y-gs.yoffset)<0) || // clip top
         ((gs.rain[i].y-gs.yoffset)>YMAX))   // clip bottom
       continue;
 
@@ -1282,9 +1282,9 @@ function drawparticle(particle)
   var y=particle.y+(particle.t*Math.sin(particle.ang));
 
   // Clip to what's visible
-    if (((Math.floor(x)-gs.xoffset)<0) && // clip left
-    ((Math.floor(x)-gs.xoffset)>XMAX) && // clip right
-    ((Math.floor(y)-gs.yoffset)<0) && // clip top
+    if (((Math.floor(x)-gs.xoffset)<0) || // clip left
+    ((Math.floor(x)-gs.xoffset)>XMAX) || // clip right
+    ((Math.floor(y)-gs.yoffset)<0) || // clip top
     ((Math.floor(y)-gs.yoffset)>YMAX))   // clip bottom
   return;
 
@@ -1299,9 +1299,9 @@ function drawrain(raindrop)
   var y=raindrop.y;
 
   // Clip to what's visible
-    if (((Math.floor(x)-gs.xoffset)<0) && // clip left
-    ((Math.floor(x)-gs.xoffset)>XMAX) && // clip right
-    ((Math.floor(y)-gs.yoffset)<0) && // clip top
+    if (((Math.floor(x)-gs.xoffset)<0) || // clip left
+    ((Math.floor(x)-gs.xoffset)>XMAX) || // clip right
+    ((Math.floor(y)-gs.yoffset)<0) || // clip top
     ((Math.floor(y)-gs.yoffset)>YMAX))   // clip bottom
   return;
 
