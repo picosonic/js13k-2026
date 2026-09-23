@@ -217,6 +217,8 @@ Removed debug feature, including FPS calculations.
 
 Added rainbow and unicorn to level select screen.
 
+![Level select](levelselect.png?raw=true "Level select")
+
 11th September
 --------------
 Remove timeline from level select menu as it wasn't really necessary. Instead use a new menu raf callback.
