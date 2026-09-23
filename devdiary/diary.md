@@ -193,6 +193,8 @@ Started to flesh out some level ideas, a horizontal one and a vertical one. Tryi
 
 Added a level which is split into 4 zones - to roughly match the seasons.
 
+![Four seasons](4seasons.png?raw=true "Four seasons")
+
 8th September
 -------------
 Highlight on the menu which is the currently selected level and which are unlocked levels (ones that have already been completed).
