@@ -201,6 +201,8 @@ Some of the levels are made too easy because you can jump off the top of the lev
 
 Worked on blue level full of pipes and water.
 
+![Blue level](bluelevel.png?raw=true "Blue level")
+
 9th September
 -------------
 Working on some more level updates, starting to come closer to the 13k limit!
