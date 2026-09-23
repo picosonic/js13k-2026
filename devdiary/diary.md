@@ -135,6 +135,8 @@ I want to add a level select screen with clickable boxes (rainbow tinted).
 -------------
 Added a coin block, that when hit from below breaks to reveal a coin. These are included in the check for the level being complete, so they all need collecting.
 
+![Coinblock break](coinblock.gif?raw=true "Coinblock break")
+
 Decided on a name for the game - "Rush to the Rainbow". The ultimate target once you've collected everything is to get to the rainbow before the storm comes. I've add a countdown timer for the coming of the storm.
 
 Pumpkins can now be collected for 5 points, and gems have been upped to 10 points when collected! But neither are required to complete a level.
