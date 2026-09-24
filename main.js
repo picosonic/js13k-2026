@@ -1002,19 +1002,18 @@ function updateplayerchar()
         case TILESPIKES:
           if (gs.fall)
           {
-            if (gs.htime==0)
-            {
-              // Lose health (when not already hurt)
-              if (gs.lives>0)
-                gs.lives-=0.5;
+            // Lose health (when not already hurt)
+            if ((gs.htime==0) && (gs.lives>0))
+              gs.lives-=0.5;
 
-              gs.htime=(TARGETFPS*2);
+            // Set or increase hurt timer
+            gs.htime=(TARGETFPS*2);
 
-              gs.jump=true;
-              gs.fall=false;
+            // Fly up in the air
+            gs.jump=true;
+            gs.fall=false;
 
-              gs.vs=-(gs.jumpspeed*0.80); // Fly up in the air
-            }
+            gs.vs=-(gs.jumpspeed*0.80);
           }
           break;
 
