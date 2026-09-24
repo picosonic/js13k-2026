@@ -107,7 +107,7 @@ Spikes now cause damage when landed on from above and make unicorn jump up in pa
 
 When moving sprites by fractional amounts they can be drawn incorrectly, so sprite tile drawing routine ensures they are rendered on whole number coordinates.
 
-Added logic for BOB robots, to animate when active, and to wake up when the player is near or sleep when they are far away. They also cause damage when touched. Sort the BOB character to the end so that they are rendered on top of othet chars.
+Added logic for BOB robots, to animate when active, and to wake up when the player is near or sleep when they are far away. They also cause damage when touched. Sort the BOB character to the end so that they are rendered on top of other chars.
 
 Added logic to determine if current level is complete by counting the number of remaining coins and gems and checking to see if the player is on the rainbow. This took longer than anticipated because I was checking for overlapping a rainbow tile - but tiles are solid so you can never overlap them, instead I needed to check for overlapping chars.
 
