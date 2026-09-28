@@ -920,7 +920,7 @@ function updatemovements()
     {
       for (var id=0; id<gs.chars.length; id++)
       {
-        if (overlap(gs.x-(SPRITEWIDTH/2), gs.y-(SPRITEHEIGHT/2), SPRITEWIDTH*2, SPRITEHEIGHT*2, gs.chars[id].x, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
+        if (overlap(gs.x-SPRITEWIDTH, gs.y-SPRITEHEIGHT, SPRITEWIDTH*3, SPRITEHEIGHT*3, gs.chars[id].x, gs.chars[id].y, TILEWIDTH, TILEHEIGHT))
         {
           switch (gs.chars[id].id)
           {
@@ -1040,7 +1040,6 @@ function updateplayerchar()
           {
             // Move back to previous position
             gs.x=gs.px;
-            gs.y=gs.py;
 
             gs.hs=0;
           }
@@ -1259,6 +1258,7 @@ function drawchars()
           drawspritetile(gs.chars[id]);
         break;
 
+      // Draw water button up or down depending on flow
       case TILEBUTTON:
         if (gs.water>0)
           drawspritetile({id:TILEBUTTON2, x:gs.chars[id].x, y:gs.chars[id].y});
