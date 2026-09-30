@@ -239,6 +239,48 @@ Level select menu is now keyboard only. When music hasn't been started yet, flas
 
 Due to massive space saving by taking out timeline and other golfing, decided to expanded levels until we reach the golden 13k!
 
+12th September
+--------------
+Submitted the game entry, made the ZIP to exactly 13312 bytes
+
+16th September
+--------------
+After submission, I wanted to address the audio-context starting issues I'd seen so spent time expanding all the ways a user interaction could start it and resume it if suspended for any reason. This is handy on touchscreen devices where you can play with a gamepad.
+
+18th September
+--------------
+Following some gameplay feedback via JS13k voting, some people were experiencing issues with framerates when the rain starts. So I've re-added the FPS monitoring and rain collisions are now only checked for rain particles which are visible on screen.
+
+21st September
+--------------
+For reference I added the level which I generated to test all the different mechanics of the game including physics, keys, blocks, e.t.c.
+
+22nd September
+--------------
+Fixed to calculate FPS even when debug is off - as this value is used to decide if rain processing needs to reduce.
+
+Clipping fixes where tiles were getting drawn outside visible area but clipped by the canvas since the code I had to software clip was using AND for everything - so would never actually clip.
+
+Coin blocks were not being counted in the remaining coins test to see if the level was complete, this was because it was only counting chars and the coin blocks fall under the tiles layer.
+
+As rng can sometimes come with a performace hit, I've adjusted the rain so under low FPS conditions it doesn't use rng and reduces the amount of rain particles.
+
+23rd September
+--------------
+Updated dev diary with more images
+
+24th September
+--------------
+When hitting spikes whilst hurting, you can go through them. I thought this felt odd so I've updated it such that hitting spikes always makes you jump, but doesn't hurt subsequent times.
+
+As part of the spikes change I've had to make some adjustments to test level which relied on spike navigation whilst already hurt to access certain areas.
+
+28th September
+--------------
+Following feedback via JS13k voting where some people have got stuck near running water, I've altered the size of water traps and made the test for restarting the water have a bigger hitbox to check for the player lurking in its path.
+
+Also changed the bottom of the "bath" on the pipes level to water so that the player has a way to get out if they are trapped - go for a swim.
+
 Code distribution
 -----------------
 
